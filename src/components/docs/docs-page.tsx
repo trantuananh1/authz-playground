@@ -179,6 +179,7 @@ const PARTS: { title: string; sections: [string, string][] }[] = [
       ["mo-hinh", "Ba mô hình phân quyền"],
       ["man-hinh", "Các khu vực trên màn hình"],
       ["bat-dau", "Bắt đầu nhanh"],
+      ["ai-skill", "Thiết kế nhanh với AI Skill"],
     ],
   },
   {
@@ -208,16 +209,6 @@ const PARTS: { title: string; sections: [string, string][] }[] = [
   },
   { title: "Lưu và chia sẻ", sections: [["luu-chia-se", "Lưu, nhập, xuất, chia sẻ"]] },
   {
-    title: "Thiết kế với AI Skill",
-    sections: [
-      ["ai-tong-quan", "Tổng quan và tải về"],
-      ["ai-cai-dat", "Cài đặt"],
-      ["ai-quy-trinh", "Quy trình 6 bước"],
-      ["ai-playground", "Thử thiết kế trên playground"],
-      ["ai-tham-khao", "Bảng lệnh và xử lý sự cố"],
-    ],
-  },
-  {
     title: "Tham khảo",
     sections: [
       ["policy-lon", "Làm việc với policy lớn"],
@@ -234,7 +225,7 @@ function Content() {
     <>
       <h1 className="mb-2 text-[30px] font-semibold tracking-tight">Hướng dẫn sử dụng vAuthz Playground</h1>
       <p className="mb-12 text-muted-foreground">
-        Từ những bước đầu tiên tới cú pháp đầy đủ và thiết kế bằng AI, chia thành bảy phần theo thứ tự bạn làm việc.
+        Từ những bước đầu tiên tới cú pháp đầy đủ và thiết kế bằng AI, chia thành sáu phần theo thứ tự bạn làm việc.
       </p>
       <Part n={1} id="phan-1" title="Bắt đầu">
         <Section id="gioi-thieu" title="Giới thiệu">
@@ -499,6 +490,64 @@ permit bac_si_truc to cung_khoa: read`}</Code>
               Bấm <B>Share</B> để sao chép đường link chứa toàn bộ file, gửi cho đồng nghiệp xem đúng trạng thái bạn đang có.
             </Step>
           </Steps>
+        </Section>
+        <Section id="ai-skill" title="Thiết kế nhanh với AI Skill">
+          <P>
+            Có sẵn tài liệu nghiệp vụ (quy trình, SRS, bảng chức năng, ma trận phân quyền)? Hãy để AI chatbot đọc tài liệu và đề xuất thiết
+            kế phân quyền, rồi thử ngay trên playground này. Bạn không cần biết RBAC, ReBAC hay ABAC.
+          </P>
+          <div className="my-4 flex flex-wrap gap-2">
+            <a
+              href={`${import.meta.env.BASE_URL}downloads/thiet-ke-phan-quyen.zip`}
+              download
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition-transform hover:-translate-y-px active:translate-y-0"
+            >
+              <Download className="size-4" /> Skill thiết kế phân quyền
+            </a>
+            <a
+              href={`${import.meta.env.BASE_URL}downloads/truc-quan-phan-quyen.zip`}
+              download
+              className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[13.5px] font-medium transition-transform hover:-translate-y-px active:translate-y-0"
+            >
+              <Download className="size-4" /> Skill rà soát (tuỳ chọn)
+            </a>
+          </div>
+          <Steps>
+            <Step>
+              <B>Thêm skill vào chatbot.</B> Trong phần cài đặt Skill của chatbot (ví dụ Claude: Settings › Capabilities › Skills), tải lên
+              file zip vừa tải về.
+            </Step>
+            <Step>
+              <B>Gửi tài liệu.</B> Mở cuộc trò chuyện mới, đính kèm tài liệu (Word, PDF, Excel, drawio) và gõ <C>/thiet-ke-phan-quyen</C>.
+            </Step>
+            <Step>
+              <B>Trả lời câu hỏi.</B> AI hỏi các điểm tài liệu chưa rõ, mỗi câu có sẵn phương án; chọn phương án đề xuất nếu chưa chắc.
+            </Step>
+            <Step>
+              <B>Rà soát.</B> AI liệt kê quyền theo từng vai trò. Trả lời <B>Đúng</B>, hoặc <B>Sai</B> kèm cách đúng, ngay trong cuộc trò
+              chuyện.
+            </Step>
+            <Step>
+              <B>Cập nhật.</B> Gõ <C>/thiet-ke-phan-quyen cap-nhat</C>. Lặp bước 4–5 tới khi mọi quyền đã được xác nhận.
+            </Step>
+            <Step>
+              <B>Thử trên playground.</B> Tải file <C>.dsl</C> AI xuất ra, bấm <B>Import</B> ở playground. Tab Tests báo “x of y tests
+              pass”: đạt hết là thiết kế đúng ý đồ.
+            </Step>
+          </Steps>
+          <Table
+            head={["Nhãn trên mỗi quyền", "Nghĩa là"]}
+            rows={[
+              ["Theo tài liệu", "Tài liệu nêu, AI giữ nguyên."],
+              ["Theo quy định chung", "Suy ra từ quy định chung (cấp trên xem cấp dưới, duyệt thì được xem…); chỉ là quyền xem."],
+              ["AI đề xuất thêm", "Tài liệu không nêu; AI thêm, kèm lý do."],
+              ["AI đề xuất bỏ", "Tài liệu nêu nhưng trái nguyên tắc (ví dụ một người vừa lập vừa duyệt); AI đề nghị bỏ."],
+            ]}
+          />
+          <Callout>
+            Phân hệ lớn: nhờ AI xuất <B>mỗi mảng nghiệp vụ một file</B> rồi nạp từng file. Dữ liệu trong file (đơn vị A, B…) là dữ liệu mẫu
+            để thử, không phải dữ liệu thật.
+          </Callout>
         </Section>
       </Part>
       <Part n={2} id="phan-2" title="Viết policy">
@@ -1100,181 +1149,7 @@ permit bac_si_truc to cung_khoa: read`}</Code>
           <Shot name="export-menu" alt="Menu Export" width="half" />
         </Section>
       </Part>
-      <Part n={6} id="phan-6" title="Thiết kế với AI Skill">
-        <Section id="ai-tong-quan" title="Tổng quan và tải về">
-          <P>
-            Bộ <B>AI Skill phân quyền</B> giúp BA đi từ <B>tài liệu nghiệp vụ</B> (Word, PDF, Excel, sơ đồ drawio) tới một{" "}
-            <B>chính sách phân quyền chạy thử được ngay trên playground này</B>. BA chỉ cần gõ lệnh, trả lời câu hỏi nghiệp vụ và bấm Đúng /
-            Sai; không cần biết RBAC, ReBAC hay ABAC.
-          </P>
-          <a
-            href={`${import.meta.env.BASE_URL}downloads/ai-skill-phan-quyen.zip`}
-            download
-            className="my-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition-transform hover:-translate-y-px active:translate-y-0"
-          >
-            <Download className="size-4" /> Tải bộ AI Skill (.zip, 120 KB)
-          </a>
-          <P>Bộ công cụ gồm hai skill, chạy trong ứng dụng Claude (thẻ Code) hoặc Claude Code:</P>
-          <Table
-            head={["Lệnh", "Việc làm"]}
-            rows={[
-              [
-                <C key="c">/thiet-ke-phan-quyen</C>,
-                "Đọc tài liệu; đề xuất vai trò, dữ liệu, quyền và phạm vi; tự áp quy định chung (duyệt thì được xem, cấp trên xem cấp dưới, người lập không tự duyệt…); tự kiểm tra nguyên tắc; xuất tệp import và tệp chạy thử trên playground.",
-              ],
-              [
-                <C key="c">/truc-quan-phan-quyen</C>,
-                "Mở giao diện rà soát trên máy: BA đọc từng câu theo vai trò, bấm Đúng / Sai, trả lời câu hỏi và xuất biên bản.",
-              ],
-            ]}
-          />
-          <P>Mỗi quyền trong thiết kế mang một nhãn nguồn gốc, để BA biết chỗ nào lấy từ tài liệu và chỗ nào do AI suy ra:</P>
-          <Table
-            head={["Nhãn", "Ý nghĩa"]}
-            rows={[
-              ["Theo tài liệu", "Tài liệu nêu, AI giữ nguyên."],
-              [
-                "Theo quy định chung",
-                "Suy ra từ bộ quy định kế thừa đã duyệt; chỉ là quyền xem hoặc ràng buộc, không bao giờ là quyền ghi.",
-              ],
-              ["AI đề xuất thêm", "Tài liệu không nêu; AI thêm theo nguyên tắc, kèm lý do."],
-              ["AI đề xuất bỏ", "Tài liệu nêu nhưng trái nguyên tắc (ví dụ một người vừa lập vừa duyệt); AI đề nghị bỏ, kèm lý do."],
-            ]}
-          />
-        </Section>
-
-        <Section id="ai-cai-dat" title="Cài đặt">
-          <P>Làm một lần trên mỗi máy:</P>
-          <Steps>
-            <Step>Cài ứng dụng Claude trên máy tính (dùng thẻ Code) hoặc Claude Code.</Step>
-            <Step>
-              Cài <B>Python 3.10</B> trở lên. Trên Windows, đánh dấu ô <B>Add Python to PATH</B> khi cài.
-            </Step>
-            <Step>
-              Giải nén tệp vừa tải vào thư mục skill: Windows <C>{"C:\\Users\\<tên đăng nhập>\\.claude\\skills\\"}</C>, macOS / Linux{" "}
-              <C>~/.claude/skills/</C>. Sau khi giải nén phải có đúng hai thư mục <C>thiet-ke-phan-quyen</C> và <C>truc-quan-phan-quyen</C>{" "}
-              nằm ngay trong <C>skills</C>.
-            </Step>
-            <Step>
-              Mở lại ứng dụng Claude và gõ <C>/</C> trong ô chat. Danh sách gợi ý có <C>thiet-ke-phan-quyen</C> và{" "}
-              <C>truc-quan-phan-quyen</C> là đã cài xong.
-            </Step>
-          </Steps>
-        </Section>
-
-        <Section id="ai-quy-trinh" title="Quy trình 6 bước">
-          <Steps>
-            <Step>
-              <B>Đặt tài liệu vào một thư mục.</B> Tạo một thư mục cho phân hệ và chép tài liệu vào: quy trình, SRS, khảo sát (<C>.docx</C>,{" "}
-              <C>.pdf</C>, <C>.md</C>); bảng chức năng / usecase có cột tác nhân; ma trận phân quyền Excel (dòng chức năng, cột vai trò; nếu
-              có, AI còn đo độ khớp giữa thiết kế và ma trận); sơ đồ quy trình <C>.drawio</C> có làn. Trong ứng dụng Claude, mở phiên mới và
-              chọn thư mục này làm thư mục làm việc.
-            </Step>
-            <Step>
-              <B>Gõ lệnh thiết kế.</B> Chỉ cần <C>/thiet-ke-phan-quyen</C>; có nhiều tài liệu thì AI hỏi chọn, hoặc gõ tên tệp sau lệnh. AI
-              làm liền một mạch: lập danh sách giao dịch “ai – làm gì”, hỏi các điểm nghiệp vụ, lập thiết kế và tự kiểm tra nguyên tắc, mở
-              giao diện rà soát, xuất tệp import và tệp playground. Kết quả nằm trong thư mục <C>{"thiet_ke_<tên tài liệu>"}</C> cạnh tài
-              liệu.
-            </Step>
-            <Step>
-              <B>Trả lời câu hỏi nghiệp vụ.</B> AI hỏi những điểm tài liệu chưa nói rõ (ai duyệt ở cấp đơn vị, thông tin nhạy cảm cho ai
-              xem…). Mỗi câu có sẵn lựa chọn, phương án khuyến nghị đứng đầu; chọn <B>Other</B> để tự gõ. Một câu trả lời thường thay đổi
-              nhiều quyền cùng lúc.
-            </Step>
-            <Step>
-              <B>Rà soát trên giao diện</B> (tự mở, dạng <C>http://localhost:4190/</C>; mở lại bằng <C>/truc-quan-phan-quyen</C>). Ghi tên
-              người rà soát; trả lời các câu còn mở ở thẻ <B>Câu hỏi cho BA</B>; ở thẻ <B>Theo vai trò</B>, đọc từng câu và bấm <B>Đúng</B>{" "}
-              hoặc <B>Sai</B> (bấm <B>Vì sao?</B> để xem căn cứ); tải biên bản ở thẻ <B>Biên bản</B>.
-            </Step>
-            <Step>
-              <B>Cập nhật thiết kế</B> bằng <C>/thiet-ke-phan-quyen cap-nhat</C>. AI đọc ý kiến rà soát, sửa thiết kế và xuất lại các tệp.
-              Lặp bước 4 và 5 tới khi mọi câu đã được xác nhận.
-            </Step>
-            <Step>
-              <B>Thử trên playground</B> (mục tiếp theo).
-            </Step>
-          </Steps>
-          <Table
-            head={["Bấm", "Trên câu có nhãn", "Kết quả khi cập nhật"]}
-            rows={[
-              ["Đúng", "bất kỳ", "Giữ nguyên."],
-              ["Sai", "AI đề xuất thêm", "Quyền bị bỏ."],
-              ["Sai", "AI đề xuất bỏ", "Giữ lại quyền tài liệu nêu."],
-              ["Sai", "Theo tài liệu / theo quy định chung", "AI đọc lại tài liệu và ghi chú để sửa thiết kế."],
-            ]}
-          />
-        </Section>
-
-        <Section id="ai-playground" title="Thử thiết kế trên playground">
-          <Bullets>
-            <li>
-              <B>Chọn tệp:</B> nên dùng <C>{"playground_theo_mang/<mảng>.dsl"}</C> (mỗi tệp một mảng nghiệp vụ, 10–40 KB). Tệp{" "}
-              <C>playground.dsl</C> chứa toàn bộ phân hệ; với phân hệ lớn, bật Collapse roles và dùng chế độ tập trung trên đồ thị (xem “Làm
-              việc với policy lớn”). Muốn chỉ xem vài loại dữ liệu: <C>{"/thiet-ke-phan-quyen dsl <key>,<key>"}</C>.
-            </li>
-            <li>
-              <B>Nạp tệp:</B> bấm <B>Import</B> trên header và chọn tệp <C>.dsl</C>, hoặc kéo-thả tệp vào trang. Nếu ứng dụng Claude có
-              trình duyệt tích hợp, <C>/thiet-ke-phan-quyen playground</C> sẽ tự nạp.
-            </li>
-            <li>
-              <B>Đọc kết quả:</B> <span className="text-allow">Valid</span> là tệp đúng cú pháp; tab <B>Tests</B> báo “x of y tests pass”,
-              đạt hết nghĩa là chính sách đúng ý đồ thiết kế; tab <B>Check</B> để tự hỏi một câu (tenant <C>mac_dinh</C>); <B>Graph</B> và{" "}
-              <B>Policy › Matrix</B> để xem tổng thể. Cảnh báo “Resource 'don_vi' has no actions” là bình thường: cây đơn vị chỉ dùng để
-              tính phạm vi.
-            </li>
-          </Bullets>
-          <Table
-            head={["Trên màn hình", "Nghĩa trong thiết kế của skill"]}
-            rows={[
-              ["Resource", "Loại dữ liệu, ví dụ truong_mam_non."],
-              ["Resource role", "Vai trò gắn với một đơn vị hoặc bản ghi, có phạm vi (ví dụ trợ lý CTQC ở đơn vị A)."],
-              ["Top-level role", "Vai trò toàn hệ thống; đuôi __quyen_chung là quyền không theo bản ghi (thêm mới, nhập, xuất)."],
-              ["Relation, Role derivation", "Quan hệ giữa dữ liệu (cap_tren, thuoc_don_vi…) và quyền lan theo quan hệ đó."],
-              ["User set, Resource set, ABAC rule", "Quyền theo điều kiện, ví dụ người lập xem được bản ghi do mình lập."],
-              ["can / cannot", "Được / không được."],
-            ]}
-          />
-          <Callout tone="note">
-            Dữ liệu trên playground là <B>dữ liệu mẫu</B> do AI dựng để thử (đơn vị A, B, trường mầm non 1, 2…). Các ràng buộc như chỉ duyệt
-            khi đang chờ duyệt, người lập không tự duyệt, bản ghi đã khoá không sửa được nằm trong thiết kế và tệp import; trên playground
-            chúng chỉ được liệt kê ở chú thích cuối tệp.
-          </Callout>
-        </Section>
-
-        <Section id="ai-tham-khao" title="Bảng lệnh và xử lý sự cố">
-          <Table
-            head={["Gõ", "Khi nào"]}
-            rows={[
-              [
-                <C key="c">/thiet-ke-phan-quyen</C>,
-                "Bắt đầu thiết kế từ tài liệu trong thư mục; nếu đã có thiết kế, AI hỏi cập nhật hay làm mới.",
-              ],
-              [<C key="c">{"/thiet-ke-phan-quyen <tệp> …"}</C>, "Thiết kế mới từ đúng các tệp chỉ định."],
-              [<C key="c">/thiet-ke-phan-quyen cap-nhat</C>, "Sau mỗi lượt rà soát trên giao diện."],
-              [<C key="c">{"/thiet-ke-phan-quyen dsl <key>,<key>"}</C>, "Xuất tệp playground chỉ gồm vài loại dữ liệu."],
-              [<C key="c">{"/thiet-ke-phan-quyen playground [<tệp>]"}</C>, "Nạp một tệp lên playground (cần trình duyệt tích hợp)."],
-              [<C key="c">/truc-quan-phan-quyen</C>, "Mở lại giao diện rà soát."],
-            ]}
-          />
-          <Table
-            head={["Hiện tượng", "Cách xử lý"]}
-            rows={[
-              [
-                "Gõ / không thấy lệnh",
-                "Kiểm tra hai thư mục skill nằm ngay trong .claude/skills (không lồng thêm một cấp), rồi mở lại ứng dụng.",
-              ],
-              ["Báo không tìm thấy Python", "Cài Python 3.10+ (Windows: đánh dấu Add Python to PATH), mở lại ứng dụng."],
-              ["Giao diện rà soát không mở", "Gõ /truc-quan-phan-quyen; AI tự chọn cổng trống và đưa địa chỉ mới."],
-              [
-                "Playground rối, chậm",
-                "Nạp tệp theo mảng, hoặc dùng lệnh dsl với vài loại dữ liệu; bật Collapse roles và chế độ tập trung.",
-              ],
-              ["Một số câu kiểm thử không đạt", "Chụp màn hình tab Tests và gửi vào cửa sổ Claude để AI sửa bước xuất."],
-            ]}
-          />
-        </Section>
-      </Part>
-      <Part n={7} id="phan-7" title="Tham khảo">
+      <Part n={6} id="phan-6" title="Tham khảo">
         <Section id="policy-lon" title="Làm việc với policy lớn">
           <P>
             Playground xử lý tốt các policy cỡ hàng trăm role và hàng nghìn ca kiểm thử: kiểm tra quyền, chạy test và vẽ đồ thị đều cập nhật
