@@ -175,8 +175,9 @@ function Content() {
         <Shot name="overview" alt="Toàn cảnh playground với bốn khu vực được đánh số" />
         <Steps>
           <Step>
-            <B>Thanh trên cùng (header).</B> Logo, nút chuyển giữa <B>Playground</B> và <B>Docs</B>, menu chọn <B>Store</B> mẫu, tên file
-            đang mở, nút đổi định dạng <B>DSL / JSON</B>, <B>Import</B>, <B>Export</B>, <B>Share</B> và nút đổi giao diện sáng/tối.
+            <B>Thanh trên cùng (header)</B>, chia nhóm theo luồng làm việc từ trái sang phải: logo và nút chuyển <B>Playground</B> /{" "}
+            <B>Docs</B>; nhóm <B>nguồn</B> (menu <B>Store</B> chọn store mẫu và nút <B>Import</B> mở file); nhóm <B>định dạng</B> (
+            <B>DSL / JSON</B>); nhóm <B>đầu ra</B> ở bên phải (<B>Export</B>, <B>Share</B>); cuối cùng là nút đổi giao diện sáng/tối.
           </Step>
           <Step>
             <B>Policy.</B> Nội dung file policy. Xem dạng <B>Text</B> (soạn thảo như code) hoặc <B>Matrix</B> (bảng tick quyền). Góc phải

@@ -53,6 +53,18 @@ function Logo() {
   )
 }
 
+const Divider = () => <div className="h-6 w-px shrink-0 bg-border" aria-hidden />
+
+/** Buttons that belong together, drawn as one bordered control. */
+const joinedItem = "h-full rounded-none border-0 px-2.5 text-[12.5px] shadow-none"
+function Joined({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div role="group" aria-label={label} className="flex h-8 items-center overflow-hidden rounded-md border">
+      {children}
+    </div>
+  )
+}
+
 /** Switches between the playground and the user guide. */
 function PageNav() {
   const page = useStore((s) => s.page)
@@ -93,7 +105,6 @@ export function readPolicyFile(file: File) {
 
 export function Header() {
   const sampleId = useStore((s) => s.sampleId)
-  const fileName = useStore((s) => s.fileName)
   const format = useStore((s) => s.format)
   const theme = useStore((s) => s.theme)
   const page = useStore((s) => s.page)
@@ -124,127 +135,139 @@ export function Header() {
 
   return (
     <header className="flex h-13 shrink-0 items-center gap-3 border-b bg-panel px-4">
+      {/* where you are */}
       <Logo />
       <PageNav />
+
       {page === "playground" && (
         <>
-          <div className="mx-1 h-6 w-px bg-border" />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 pr-2 text-[12.5px]">
-                <span className="text-muted-foreground">Store</span>
-                <span className="font-medium">{sample?.name ?? "Custom file"}</span>
-                <ChevronDown className="size-3.5 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-80">
-              <DropdownMenuLabel className="text-[11px] text-muted-foreground">Sample stores</DropdownMenuLabel>
-              {SAMPLES.map((s) => (
-                <DropdownMenuItem key={s.id} onSelect={() => loadSample(s.id)} className="items-start gap-2 py-2">
-                  <Check className={cn("mt-0.5 size-3.5 shrink-0", s.id === sampleId ? "opacity-100" : "opacity-0")} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium">{s.name}</span>
-                      <span className="ml-auto flex gap-1">
-                        {s.models.map((m) => (
-                          <span
-                            key={m}
-                            className={cn(
-                              "rounded-sm px-1 font-mono text-[10px] font-semibold",
-                              m === "RBAC" && "bg-rbac/15 text-rbac",
-                              m === "ReBAC" && "bg-rebac/15 text-rebac",
-                              m === "ABAC" && "bg-abac/15 text-abac",
-                            )}
-                          >
-                            {m}
-                          </span>
-                        ))}
-                      </span>
-                    </div>
-                    <div className="text-[11.5px] text-muted-foreground">{s.description}</div>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => inputRef.current?.click()} className="gap-2">
-                <FileUp className="size-3.5" /> Open a .dsl or .json file…
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <span className="hidden truncate font-mono text-[12px] text-muted-foreground md:inline">{fileName}</span>
-        </>
-      )}
-
-      <div className="ml-auto flex items-center gap-2">
-        {page === "playground" && (
-          <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <ToggleGroup
-                    type="single"
-                    variant="outline"
-                    size="sm"
-                    value={format}
-                    onValueChange={(v) => v && convert(v as PolicyFormat)}
-                    aria-label="Policy format"
-                  >
-                    <ToggleGroupItem
-                      value="dsl"
-                      className="h-8 px-3 font-mono text-[12px] text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-foreground"
-                    >
-                      DSL
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="json"
-                      className="h-8 px-3 font-mono text-[12px] text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-foreground"
-                    >
-                      JSON
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>Convert the editor between DSL and JSON</TooltipContent>
-            </Tooltip>
-
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".json,.dsl,.txt,application/json,text/plain"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) readPolicyFile(f)
-                e.target.value = ""
-              }}
-            />
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[12.5px]" onClick={() => inputRef.current?.click()}>
-              <FileUp className="size-3.5" /> Import
-            </Button>
-
+          <Divider />
+          {/* source: where the policy comes from */}
+          <Joined label="Policy source">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[12.5px]">
-                  <Download className="size-3.5" /> Export <ChevronDown className="size-3.5 text-muted-foreground" />
+                <Button variant="ghost" size="sm" className={cn(joinedItem, "gap-2 pr-2")}>
+                  <span className="text-muted-foreground">Store</span>
+                  <span className="font-medium">{sample?.name ?? "Custom file"}</span>
+                  <ChevronDown className="size-3.5 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem onSelect={() => exportAs("dsl")}>Download as DSL (.dsl)</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => exportAs("json")}>Download as JSON (.json)</DropdownMenuItem>
+              <DropdownMenuContent align="start" className="w-80">
+                <DropdownMenuLabel className="text-[11px] text-muted-foreground">Sample stores</DropdownMenuLabel>
+                {SAMPLES.map((s) => (
+                  <DropdownMenuItem key={s.id} onSelect={() => loadSample(s.id)} className="items-start gap-2 py-2">
+                    <Check className={cn("mt-0.5 size-3.5 shrink-0", s.id === sampleId ? "opacity-100" : "opacity-0")} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-medium">{s.name}</span>
+                        <span className="ml-auto flex gap-1">
+                          {s.models.map((m) => (
+                            <span
+                              key={m}
+                              className={cn(
+                                "rounded-sm px-1 font-mono text-[10px] font-semibold",
+                                m === "RBAC" && "bg-rbac/15 text-rbac",
+                                m === "ReBAC" && "bg-rebac/15 text-rebac",
+                                m === "ABAC" && "bg-abac/15 text-abac",
+                              )}
+                            >
+                              {m}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                      <div className="text-[11.5px] text-muted-foreground">{s.description}</div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => copy("text")} className="gap-2">
-                  <Copy className="size-3.5" /> Copy editor text
+                <DropdownMenuItem onSelect={() => inputRef.current?.click()} className="gap-2">
+                  <FileUp className="size-3.5" /> Open a .dsl or .json file…
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <span aria-hidden className="h-4 w-px shrink-0 bg-border" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className={cn(joinedItem, "gap-1.5")} onClick={() => inputRef.current?.click()}>
+                  <FileUp className="size-3.5" /> Import
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open a .dsl or .json file, or drop it anywhere on the page</TooltipContent>
+            </Tooltip>
+          </Joined>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".json,.dsl,.txt,application/json,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) readPolicyFile(f)
+              e.target.value = ""
+            }}
+          />
 
-            <Button size="sm" className="h-8 gap-1.5 text-[12.5px]" onClick={() => copy("link")}>
-              <Link2 className="size-3.5" /> Share
-            </Button>
+          {/* format: how the policy is written */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={format}
+                  onValueChange={(v) => v && convert(v as PolicyFormat)}
+                  aria-label="Policy format"
+                  className="h-8 rounded-md border p-0.5"
+                >
+                  <ToggleGroupItem
+                    value="dsl"
+                    className="h-6 px-2.5 font-mono text-[11.5px] text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-foreground"
+                  >
+                    DSL
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="json"
+                    className="h-6 px-2.5 font-mono text-[11.5px] text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-foreground"
+                  >
+                    JSON
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Policy format: switching converts the editor</TooltipContent>
+          </Tooltip>
+        </>
+      )}
+
+      <div className="ml-auto flex items-center gap-3">
+        {page === "playground" && (
+          <>
+            {/* output: where the policy goes */}
+            <div className="flex items-center gap-1.5" role="group" aria-label="Policy output">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-[12.5px]">
+                    <Download className="size-3.5" /> Export <ChevronDown className="size-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onSelect={() => exportAs("dsl")}>Download as DSL (.dsl)</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => exportAs("json")}>Download as JSON (.json)</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => copy("text")} className="gap-2">
+                    <Copy className="size-3.5" /> Copy editor text
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button size="sm" className="h-8 gap-1.5 text-[12.5px]" onClick={() => copy("link")}>
+                <Link2 className="size-3.5" /> Share
+              </Button>
+            </div>
+            <Divider />
           </>
         )}
+        {/* preference */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="size-8" onClick={toggleTheme} aria-label="Toggle colour theme">
