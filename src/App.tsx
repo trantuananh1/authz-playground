@@ -149,7 +149,7 @@ function StatusBar() {
       {item(schema.condition_sets.length, "condition sets")}
       {item(data.users.length, "users")}
       {item(data.relationship_tuples.length, "relationships")}
-      <span className="ml-auto">Evaluated in your browser. Nothing is sent to Permit.io.</span>
+      <span className="ml-auto">Evaluated in your browser. Nothing leaves this page.</span>
     </footer>
   )
 }

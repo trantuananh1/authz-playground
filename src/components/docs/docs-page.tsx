@@ -192,19 +192,19 @@ function Content() {
   const setPage = useStore((s) => s.setPage)
   return (
     <>
-      <h1 className="mb-2 text-[30px] font-semibold tracking-tight">Hướng dẫn sử dụng vAuthz</h1>
+      <h1 className="mb-2 text-[30px] font-semibold tracking-tight">Hướng dẫn sử dụng vAuthz Playground</h1>
       <p className="mb-12 text-muted-foreground">
         Từ những bước đầu tiên tới cú pháp đầy đủ, chia thành sáu phần theo thứ tự bạn làm việc.
       </p>
       <Part n={1} id="phan-1" title="Bắt đầu">
         <Section id="gioi-thieu" title="Giới thiệu">
           <P>
-            Playground giúp bạn <B>thiết kế và thử nghiệm mô hình phân quyền</B> theo cách của Permit.io ngay trong trình duyệt. Bạn viết
-            policy dưới dạng DSL hoặc JSON, xem mô hình dưới dạng đồ thị, hỏi “người dùng này có được làm việc này không, và vì sao”, rồi
-            lưu các câu hỏi đó thành ca kiểm thử ngay trong file.
+            Playground giúp bạn <B>thiết kế và thử nghiệm mô hình phân quyền</B> ngay trong trình duyệt. Bạn viết policy dưới dạng DSL hoặc
+            JSON, xem mô hình dưới dạng đồ thị, hỏi “người dùng này có được làm việc này không, và vì sao”, rồi lưu các câu hỏi đó thành ca
+            kiểm thử ngay trong file.
           </P>
           <P>
-            Mọi tính toán diễn ra trên máy bạn. Playground <B>không gửi dữ liệu lên Permit.io</B> hay bất kỳ máy chủ nào.
+            Mọi tính toán diễn ra trên máy bạn. Playground <B>không gửi dữ liệu lên bất kỳ máy chủ nào</B>.
           </P>
           <button
             type="button"
@@ -215,7 +215,7 @@ function Content() {
           </button>
         </Section>
         <Section id="mo-hinh" title="Ba mô hình phân quyền">
-          <P>Playground hỗ trợ cả ba mô hình mà Permit.io dùng, và bạn có thể kết hợp chúng trong cùng một file.</P>
+          <P>Playground hỗ trợ cả ba mô hình phân quyền phổ biến, và bạn có thể kết hợp chúng trong cùng một file.</P>
           <Table
             head={["Mô hình", "Ý tưởng", "Ví dụ trong DSL"]}
             rows={[
@@ -547,7 +547,7 @@ function Content() {
         </Section>
         <Section id="cu-phap-json" title="Cú pháp JSON">
           <P>
-            Dạng JSON dùng đúng cấu trúc đối tượng của Permit.io API. Một file là một object với các khoá dưới đây; khoá nào không dùng có
+            Dạng JSON mô tả cùng nội dung bằng các object có cấu trúc. Một file là một object với các khoá dưới đây; khoá nào không dùng có
             thể bỏ. Các phần mô hình cũng có thể đặt chung trong một khoá <C>schema</C>.
           </P>
           <Code>{`{
@@ -675,7 +675,7 @@ function Content() {
         <Section id="dsl-json" title="Chuyển đổi DSL ↔ JSON">
           <P>
             Cùng một policy có thể viết bằng <B>DSL</B> (file <C>.dsl</C>, gọn, dễ đọc, có chú thích) hoặc <B>JSON</B> (file <C>.json</C>,
-            theo đúng cấu trúc đối tượng của Permit.io API, tiện cho máy xử lý).
+            có cấu trúc rõ ràng, tiện cho máy xử lý).
           </P>
           <Bullets>
             <li>
@@ -693,9 +693,8 @@ function Content() {
         </Section>
         <Section id="matrix-editor" title="Sửa bằng Matrix">
           <P>
-            Bấm <B>Matrix</B> ở góc trái khung Policy để sửa quyền bằng cách tick vào ô, giống trang Policy Editor của Permit.io. Mỗi lần
-            tick, playground viết lại đúng dòng <C>role …</C> hoặc <C>permit …</C> tương ứng trong file. Chú thích và phần còn lại của file
-            được giữ nguyên.
+            Bấm <B>Matrix</B> ở góc trái khung Policy để sửa quyền bằng cách tick vào ô. Mỗi lần tick, playground viết lại đúng dòng{" "}
+            <C>role …</C> hoặc <C>permit …</C> tương ứng trong file. Chú thích và phần còn lại của file được giữ nguyên.
           </P>
           <H3>Hai kiểu xem</H3>
           <P>
@@ -901,8 +900,8 @@ function Content() {
             </Step>
           </Steps>
           <Callout tone="note">
-            Playground là công cụ để <B>mô hình hoá và thử nghiệm</B>. Nó tuân theo các khái niệm của Permit.io nhưng không phải bản sao
-            chính xác của PDP (bộ quyết định quyền) chạy trên Permit.io.
+            Playground là công cụ để <B>mô hình hoá và thử nghiệm</B>. Kết quả dùng để đánh giá thiết kế, không thay thế cho hệ thống phân
+            quyền chạy thật.
           </Callout>
         </Section>
       </Part>

@@ -177,7 +177,7 @@ export function CheckPanel() {
               className="w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 font-mono text-[12px] outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 dark:bg-input/20"
             />
             <p className={cn("mt-1 text-[11.5px]", ctx.error ? "text-deny" : "text-muted-foreground")}>
-              {ctx.error ?? "Merged over the stored attributes for this check only, like Permit's check context."}
+              {ctx.error ?? "Merged over the stored attributes for this check only."}
             </p>
           </div>
         )}
