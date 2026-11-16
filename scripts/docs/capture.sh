@@ -53,6 +53,12 @@ shot '[data-tour=graph]' graph-policy
 graphtab "Data"; $AB wait 1500 >/dev/null
 $AB hover '.react-flow__node[data-id="user:beth"]' >/dev/null; $AB wait 500 >/dev/null
 shot '[data-tour=graph]' graph-data
+$AB mouse move 5 5 >/dev/null 2>&1
+graphtab "Policy"; $AB wait 1500 >/dev/null
+$AB dblclick '.react-flow__node[data-id="resource:feature"]' >/dev/null; $AB wait 1200 >/dev/null
+$AB mouse move 5 5 >/dev/null 2>&1; $AB wait 300 >/dev/null
+shot '[data-tour=graph]' graph-focus
+$AB eval 'document.querySelector("[data-tour=graph] .outline-none")?.focus(); 1' >/dev/null; $AB press Escape >/dev/null
 
 # editor errors and matrix views
 fresh drive
@@ -73,7 +79,6 @@ shot '[data-tour=panels]' check-denied
 tab "Tests"; shot '[data-tour=panels]' tests
 tab "Data"; shot '[data-tour=panels]' data
 tab "Matrix"; shot '[data-tour=panels]' user-matrix
-tab "Syntax"; shot '[data-tour=panels]' syntax
 
 cd "$OUT"
 python3 - <<'PY'
@@ -82,4 +87,4 @@ Image.open("_store-menu.png").crop((0, 0, 1480, 860)).save("store-menu.png")
 Image.open("_export-menu.png").crop((1740, 0, 2880, 320)).save("export-menu.png")
 PY
 rm -f _store-menu.png _export-menu.png
-python3 "$HERE/trim.py" check-allowed.png check-denied.png tests.png data.png user-matrix.png problems.png syntax.png
+python3 "$HERE/trim.py" check-allowed.png check-denied.png tests.png data.png user-matrix.png problems.png

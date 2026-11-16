@@ -199,3 +199,14 @@ assert bob cannot read folder:c
     }
   })
 })
+
+describe("user guide syntax example", async () => {
+  const { SYNTAX_EXAMPLE } = await import("@/components/docs/syntax-example")
+  it("parses without problems, passes its tests and round-trips through JSON", () => {
+    const { file, diagnostics } = compile(SYNTAX_EXAMPLE, "dsl")
+    expect(diagnostics).toEqual([])
+    const engine = new Engine(file!)
+    for (const t of file!.tests) expect({ t, allowed: engine.check(t).allowed }).toEqual({ t, allowed: t.expected })
+    expect(parseJson(printJson(file!))).toEqual(file)
+  })
+})

@@ -12,7 +12,6 @@ import { CheckPanel } from "@/components/panels/check-panel"
 import { DataPanel } from "@/components/panels/data-panel"
 import { MatrixPanel } from "@/components/panels/matrix-panel"
 import { ProblemsPanel } from "@/components/panels/problems-panel"
-import { ReferencePanel } from "@/components/panels/reference-panel"
 import { TestsPanel, useTestResults } from "@/components/panels/tests-panel"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -104,7 +103,6 @@ function Panels() {
     ["data", <DataPanel key="data" />],
     ["matrix", <MatrixPanel key="matrix" />],
     ["problems", <ProblemsPanel key="problems" />],
-    ["syntax", <ReferencePanel key="syntax" />],
   ] as const
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as PanelTab)} className="h-full gap-0 bg-panel" data-tour="panels">
@@ -123,9 +121,6 @@ function Panels() {
         </TabsTrigger>
         <TabsTrigger value="problems" className={tabTrigger}>
           Problems {diagnostics.length > 0 && <Count n={diagnostics.length} tone={errors ? "deny" : "warn"} />}
-        </TabsTrigger>
-        <TabsTrigger value="syntax" className={tabTrigger}>
-          Syntax
         </TabsTrigger>
       </TabsList>
       {panels.map(([id, el]) => (

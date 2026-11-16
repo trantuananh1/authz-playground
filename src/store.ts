@@ -14,7 +14,7 @@ import { applyMutation, describeMutation, type Mutation } from "@/lib/policy/edi
 import { sharedFromHash } from "@/lib/share"
 import { DEFAULT_SAMPLE, SAMPLES } from "@/samples"
 
-export type PanelTab = "check" | "tests" | "data" | "matrix" | "problems" | "syntax"
+export type PanelTab = "check" | "tests" | "data" | "matrix" | "problems"
 export type GraphTab = "policy" | "data"
 export type EditorView = "text" | "matrix"
 export type MatrixLayout = "resource" | "overview"

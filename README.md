@@ -26,8 +26,8 @@ One file holds the schema, the data (users, instances, role assignments,
 relationships) and the tests. The JSON form uses the Permit API object shapes
 (`resources`, `roles`, `condition_sets`, `condition_set_rules`,
 `granted_to.users_with_role`, `relationship_tuples`), and converts to and from the
-DSL without loss, apart from DSL comments. The **Syntax** tab in the app lists
-every construct in both forms.
+DSL without loss, apart from DSL comments. The in-app guide (**Docs**) documents
+every construct of both forms, with a complete example.
 
 ## Layout
 
@@ -36,15 +36,15 @@ every construct in both forms.
   - **Matrix**: one table per resource, actions as rows and roles as columns, grouped as top-level roles (RBAC), resource roles (ReBAC) and user sets (ABAC); each resource set adds rows for ABAC rules. Ticking a cell rewrites the matching `role` or `permit` statement in the file, keeping comments. Wildcards (`*`, `doc:*`) and permissions inherited through `extends` are marked; new top-level and resource roles can be added from here. Two layouts: **By resource** (one table per resource) and **Overview** (every resource, action and role in a single matrix with sticky headers).
 - **Left, bottom — panels**:
   - **Check**: live allow/deny with every granting path and, when denied, what was checked.
-  - **Tests**: `assert` lines run on every edit.
+  - **Tests**: `assert` lines run on every edit; large suites get a filter and a failing-only view.
   - **Data**: add or remove users, instances, role assignments and relationships. Edits are written into the policy text in place, so DSL comments survive.
   - **Matrix**: every action on every instance for one user, coloured by the model that granted it.
-  - **Problems** and **Syntax** (DSL ↔ JSON reference).
+  - **Problems**: every error and warning, with its line.
 - **Right — graph**, full height, two tabs:
   - **Policy**: resources, their roles, top-level roles, user sets and resource sets; edges for relations, derivations, grants and rules.
   - **Data**: users, resource instances (one colour per type) and tenants; edges for role assignments, relationship tuples and tenant membership.
 
-  Nodes are circles laid out by a force simulation. Hovering a node shows its name and attributes and dims everything not connected to it; clicking jumps to its definition; nodes can be dragged. "Show names" labels every node.
+  Nodes are circles laid out by a force simulation. Hovering a node shows its name and attributes in a card placed where it hides the least; clicking jumps to its definition; nodes can be dragged. Each legend entry shows or hides its kind of node or edge. Double-click a node, or search for it, to focus on it and its direct neighbours arranged on a ring; **Collapse roles** folds resource roles into their resources and is on by default above 40 roles.
 
 A **Docs** tab next to the logo opens a user guide in Vietnamese, illustrated with screenshots of the app (`public/docs/`); `?page=docs` links to it directly.
 
