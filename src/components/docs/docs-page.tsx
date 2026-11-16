@@ -189,13 +189,14 @@ const PARTS: { title: string; sections: [string, string][] }[] = [
       ["cu-phap", "Cú pháp DSL và JSON"],
       ["dsl-json", "Chuyển đổi DSL ↔ JSON"],
       ["matrix-editor", "Sửa bằng Matrix"],
+      ["data", "Dữ liệu (Data)"],
     ],
   },
   {
-    title: "Dữ liệu và đồ thị",
+    title: "Đồ thị",
     sections: [
-      ["data", "Dữ liệu (Data)"],
-      ["do-thi", "Đồ thị (Graph)"],
+      ["do-thi-chinh-sach", "Chính sách"],
+      ["do-thi-du-lieu", "Dữ liệu"],
     ],
   },
   {
@@ -958,8 +959,6 @@ permit bac_si_truc to cung_khoa: read`}</Code>
             <li>Khi file đang có lỗi cú pháp, Matrix chỉ cho xem, không cho sửa, cho tới khi bạn sửa xong lỗi trong Text.</li>
           </Bullets>
         </Section>
-      </Part>
-      <Part n={3} id="phan-3" title="Dữ liệu và đồ thị">
         <Section id="data" title="Dữ liệu (Data)">
           <P>
             Tab <B>Data</B> có bốn tab con: <B>Users</B>, <B>Instances</B> (tài nguyên cụ thể), <B>Role assignments</B> (gán role) và{" "}
@@ -987,11 +986,13 @@ permit bac_si_truc to cung_khoa: read`}</Code>
             sau khi xoá. Nút bên cạnh là <B>Redo</B>. Playground nhớ 50 thao tác gần nhất.
           </Callout>
         </Section>
-        <Section id="do-thi" title="Đồ thị (Graph)">
+      </Part>
+      <Part n={3} id="phan-3" title="Đồ thị">
+        <Section id="do-thi-chinh-sach" title="Chính sách">
           <P>
-            Tab <B>Policy</B> của khung Graph vẽ mô hình: resource (tròn lớn), role của resource (tròn nhỏ quanh nó), role cấp tenant, user
-            set và resource set. Các cạnh thể hiện relation, role derivation, quyền của role và quy tắc ABAC. Bảng <B>Legend</B> ở góc trái
-            giải thích từng biểu tượng và từng kiểu nét.
+            Tab <B>Policy</B> của khung Graph vẽ mô hình chính sách: resource (tròn lớn), role của resource (tròn nhỏ quanh nó), role cấp
+            tenant, user set và resource set. Các cạnh thể hiện relation, role derivation, quyền của role và quy tắc ABAC. Bảng{" "}
+            <B>Legend</B> ở góc trái giải thích từng biểu tượng và từng kiểu nét.
           </P>
           <Shot name="graph-policy" alt="Đồ thị chính sách khi di chuột vào một user set" />
           <Bullets>
@@ -1021,11 +1022,14 @@ permit bac_si_truc to cung_khoa: read`}</Code>
             được. Bấm <B>Show all</B> trên thanh “Focused on” hoặc <K>Esc</K> để quay lại; vị trí các nút trở về như cũ.
           </P>
           <Shot name="graph-focus" alt="Chế độ tập trung: một resource ở giữa, các nút liên quan xếp vòng quanh" />
+        </Section>
+        <Section id="do-thi-du-lieu" title="Dữ liệu">
           <P>
             Tab <B>Data</B> của khung Graph vẽ người dùng, tài nguyên (mỗi loại một màu) và tenant, cùng các cạnh gán role, quan hệ và tài
             nguyên thuộc tenant nào.
           </P>
           <Shot name="graph-data" alt="Đồ thị dữ liệu khi di chuột vào một người dùng" />
+          <P>Di chuột, bấm, kéo, tập trung vào một nút và ẩn/hiện qua Legend hoạt động giống tab Policy.</P>
         </Section>
       </Part>
       <Part n={4} id="phan-4" title="Kiểm tra quyền">
