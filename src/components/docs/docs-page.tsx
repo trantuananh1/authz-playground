@@ -137,6 +137,37 @@ function Table({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
   )
 }
 
+/** One syntax reference in two notations; the tab bar stays in view so readers can flip while comparing. */
+function SyntaxTabs({ dsl, json }: { dsl: React.ReactNode; json: React.ReactNode }) {
+  const [tab, setTab] = useState<"dsl" | "json">("dsl")
+  const item = (id: "dsl" | "json", label: string) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={tab === id}
+      onClick={() => setTab(id)}
+      className={cn(
+        "h-7 rounded-sm px-3 font-mono text-[12.5px] transition-colors",
+        tab === id ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
+  )
+  return (
+    <div>
+      <div className="sticky top-0 z-10 -mx-3 mb-4 flex items-center gap-3 border-b bg-background/95 px-3 py-2 backdrop-blur">
+        <div role="tablist" aria-label="Cách viết" className="inline-flex rounded-md border p-0.5">
+          {item("dsl", "DSL")}
+          {item("json", "JSON")}
+        </div>
+        <span className="text-[12.5px] text-muted-foreground">Chuyển tab để so sánh cùng một nội dung ở hai cách viết.</span>
+      </div>
+      <div role="tabpanel">{tab === "dsl" ? dsl : json}</div>
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------- content */
 
 /** The guide in reading order: parts, each with its sections. */
@@ -154,8 +185,7 @@ const PARTS: { title: string; sections: [string, string][] }[] = [
     title: "Viết policy",
     sections: [
       ["viet-policy", "Soạn thảo trong editor"],
-      ["cu-phap-dsl", "Cú pháp DSL"],
-      ["cu-phap-json", "Cú pháp JSON"],
+      ["cu-phap", "Cú pháp DSL và JSON"],
       ["dsl-json", "Chuyển đổi DSL ↔ JSON"],
       ["matrix-editor", "Sửa bằng Matrix"],
     ],
@@ -481,7 +511,8 @@ permit bac_si_truc to cung_khoa: read`}</Code>
           <H3>Một file gồm ba phần</H3>
           <P>
             <B>Mô hình</B> (tenant, resource, role, quy tắc ABAC), <B>dữ liệu</B> (người dùng, tài nguyên, gán role, quan hệ) và{" "}
-            <B>ca kiểm thử</B>. Cú pháp đầy đủ của từng phần nằm ở hai mục <B>Cú pháp DSL</B> và <B>Cú pháp JSON</B> ngay bên dưới.
+            <B>ca kiểm thử</B>. Cú pháp đầy đủ của từng phần nằm ở mục <B>Cú pháp DSL và JSON</B> ngay bên dưới, có tab để chuyển qua lại
+            giữa hai cách viết.
           </P>
           <H3>Khi có lỗi</H3>
           <P>
@@ -510,39 +541,42 @@ permit bac_si_truc to cung_khoa: read`}</Code>
             </li>
           </Bullets>
         </Section>
-        <Section id="cu-phap-dsl" title="Cú pháp DSL">
-          <H3>Quy tắc chung</H3>
-          <Bullets>
-            <li>
-              Mỗi câu lệnh bắt đầu bằng một từ khoá (<C>tenant</C>, <C>resource</C>, <C>role</C>, …). Xuống dòng và khoảng trắng không quan
-              trọng; nên viết mỗi câu lệnh một dòng cho dễ đọc.
-            </li>
-            <li>
-              Chú thích bắt đầu bằng <C>//</C> và kéo tới hết dòng.
-            </li>
-            <li>
-              <B>Tên</B> (key) gồm chữ, số, <C>_</C> và <C>-</C>, ví dụ <C>folder</C>, <C>rfc-042</C>. Tên có ký tự khác hoặc trùng từ khoá
-              (<C>and</C>, <C>or</C>, <C>not</C>, <C>in</C>, <C>to</C>, <C>on</C>, <C>with</C>, …) thì đặt trong ngoặc kép:{" "}
-              <C>"anne@acme.example"</C>.
-            </li>
-            <li>
-              <B>Tên hiển thị</B> là một chuỗi trong ngoặc kép, đặt ngay sau tên: <C>resource folder "Thư mục"</C>. Chuỗi hỗ trợ <C>\"</C>,{" "}
-              <C>\n</C>.
-            </li>
-            <li>
-              Tham chiếu tới một tài nguyên cụ thể viết <C>loại:khoá</C>, ví dụ <C>document:plan</C>.
-            </li>
-          </Bullets>
+        <Section id="cu-phap" title="Cú pháp DSL và JSON">
+          <SyntaxTabs
+            dsl={
+              <>
+                <H3>Quy tắc chung</H3>
+                <Bullets>
+                  <li>
+                    Mỗi câu lệnh bắt đầu bằng một từ khoá (<C>tenant</C>, <C>resource</C>, <C>role</C>, …). Xuống dòng và khoảng trắng không
+                    quan trọng; nên viết mỗi câu lệnh một dòng cho dễ đọc.
+                  </li>
+                  <li>
+                    Chú thích bắt đầu bằng <C>//</C> và kéo tới hết dòng.
+                  </li>
+                  <li>
+                    <B>Tên</B> (key) gồm chữ, số, <C>_</C> và <C>-</C>, ví dụ <C>folder</C>, <C>rfc-042</C>. Tên có ký tự khác hoặc trùng từ
+                    khoá (<C>and</C>, <C>or</C>, <C>not</C>, <C>in</C>, <C>to</C>, <C>on</C>, <C>with</C>, …) thì đặt trong ngoặc kép:{" "}
+                    <C>"anne@acme.example"</C>.
+                  </li>
+                  <li>
+                    <B>Tên hiển thị</B> là một chuỗi trong ngoặc kép, đặt ngay sau tên: <C>resource folder "Thư mục"</C>. Chuỗi hỗ trợ{" "}
+                    <C>\"</C>, <C>\n</C>.
+                  </li>
+                  <li>
+                    Tham chiếu tới một tài nguyên cụ thể viết <C>loại:khoá</C>, ví dụ <C>document:plan</C>.
+                  </li>
+                </Bullets>
 
-          <H3>Tenant</H3>
-          <Code>{`tenant acme "Acme Corp"`}</Code>
-          <P>
-            Khai báo tenant là tuỳ chọn nhưng nên có, để playground cảnh báo khi bạn gõ nhầm tên tenant. Tenant <C>default</C> dùng khi
-            không ghi tenant.
-          </P>
+                <H3>Tenant</H3>
+                <Code>{`tenant acme "Acme Corp"`}</Code>
+                <P>
+                  Khai báo tenant là tuỳ chọn nhưng nên có, để playground cảnh báo khi bạn gõ nhầm tên tenant. Tenant <C>default</C> dùng
+                  khi không ghi tenant.
+                </P>
 
-          <H3>Resource</H3>
-          <Code>{`resource document "Tài liệu" {
+                <H3>Resource</H3>
+                <Code>{`resource document "Tài liệu" {
     actions read, edit, share, delete
     attributes { owner_id: string, level: number, tags: array, locked: bool }
     relations { parent: folder }
@@ -553,128 +587,138 @@ permit bac_si_truc to cung_khoa: read`}</Code>
   
     derive editor from folder#editor via parent
   }`}</Code>
-          <Table
-            head={["Dòng", "Ý nghĩa"]}
-            rows={[
-              [<C key="c">actions a, b</C>, "Các hành động có thể làm trên resource. Bắt buộc phải có ít nhất một."],
-              [
-                <C key="c">{"attributes { tên: kiểu }"}</C>,
-                <>
-                  Thuộc tính của tài nguyên, dùng trong điều kiện ABAC. Kiểu: <C>string</C>, <C>number</C>, <C>bool</C>, <C>array</C>,{" "}
-                  <C>json</C>, <C>time</C>.
-                </>,
-              ],
-              [
-                <C key="c">{"relations { tên: resource }"}</C>,
-                <>
-                  Quan hệ tới resource khác (hoặc chính nó). <C>parent: folder</C> nghĩa là một folder có thể là <C>parent</C> của tài
-                  nguyên này.
-                </>,
-              ],
-              [
-                <C key="c">role tên: action, …</C>,
-                <>
-                  Role trên từng tài nguyên (ReBAC). <C>*</C> là mọi action. <C>extends viewer</C> thừa hưởng toàn bộ quyền của role{" "}
-                  <C>viewer</C> cùng resource.
-                </>,
-              ],
-              [
-                <C key="c">derive A from R#B via rel</C>,
-                <>
-                  Ai có role <C>B</C> trên một <C>R</C> là <C>rel</C> của tài nguyên này thì có role <C>A</C> trên tài nguyên này. Ví dụ
-                  biên tập viên của thư mục cha là biên tập viên của tài liệu. Có thể suy nhiều tầng.
-                </>,
-              ],
-            ]}
-          />
+                <Table
+                  head={["Dòng", "Ý nghĩa"]}
+                  rows={[
+                    [<C key="c">actions a, b</C>, "Các hành động có thể làm trên resource. Bắt buộc phải có ít nhất một."],
+                    [
+                      <C key="c">{"attributes { tên: kiểu }"}</C>,
+                      <>
+                        Thuộc tính của tài nguyên, dùng trong điều kiện ABAC. Kiểu: <C>string</C>, <C>number</C>, <C>bool</C>, <C>array</C>,{" "}
+                        <C>json</C>, <C>time</C>.
+                      </>,
+                    ],
+                    [
+                      <C key="c">{"relations { tên: resource }"}</C>,
+                      <>
+                        Quan hệ tới resource khác (hoặc chính nó). <C>parent: folder</C> nghĩa là một folder có thể là <C>parent</C> của tài
+                        nguyên này.
+                      </>,
+                    ],
+                    [
+                      <C key="c">role tên: action, …</C>,
+                      <>
+                        Role trên từng tài nguyên (ReBAC). <C>*</C> là mọi action. <C>extends viewer</C> thừa hưởng toàn bộ quyền của role{" "}
+                        <C>viewer</C> cùng resource.
+                      </>,
+                    ],
+                    [
+                      <C key="c">derive A from R#B via rel</C>,
+                      <>
+                        Ai có role <C>B</C> trên một <C>R</C> là <C>rel</C> của tài nguyên này thì có role <C>A</C> trên tài nguyên này. Ví
+                        dụ biên tập viên của thư mục cha là biên tập viên của tài liệu. Có thể suy nhiều tầng.
+                      </>,
+                    ],
+                  ]}
+                />
 
-          <H3>Role cấp tenant (RBAC)</H3>
-          <Code>{`role admin "Quản trị": folder:*, document:*
+                <H3>Role cấp tenant (RBAC)</H3>
+                <Code>{`role admin "Quản trị": folder:*, document:*
   role auditor: folder:read, document:read`}</Code>
-          <P>
-            Quyền viết <C>resource:action</C> hoặc <C>resource:*</C>. Role cấp tenant được gán cho người dùng theo từng tenant và{" "}
-            <B>không kế thừa nhau</B>: mỗi role phải liệt kê đủ quyền của nó.
-          </P>
+                <P>
+                  Quyền viết <C>resource:action</C> hoặc <C>resource:*</C>. Role cấp tenant được gán cho người dùng theo từng tenant và{" "}
+                  <B>không kế thừa nhau</B>: mỗi role phải liệt kê đủ quyền của nó.
+                </P>
 
-          <H3>Quy tắc ABAC</H3>
-          <Code>{`userset seniors "Nhân sự cấp cao" where user.level >= 3 and user.department in ["legal", "hr"]
+                <H3>Quy tắc ABAC</H3>
+                <Code>{`userset seniors "Nhân sự cấp cao" where user.level >= 3 and user.department in ["legal", "hr"]
   resourceset own_docs on document where resource.owner_id == user.key and resource.locked == false
   
   permit seniors to own_docs: read, edit     // người trong seniors được đọc, sửa tài liệu của chính họ
   permit seniors to document: share          // ghi tên resource: áp cho mọi tài liệu`}</Code>
-          <Bullets>
-            <li>
-              <C>userset</C> chọn người dùng theo thuộc tính <C>user.*</C>; <C>resourceset … on resource</C> chọn tài nguyên theo{" "}
-              <C>resource.*</C> (có thể so với <C>user.*</C>).
-            </li>
-            <li>
-              <C>permit nhóm-người to nhóm-tài-nguyên: action, …</C> cấp quyền. Vế phải của <C>to</C> là một resource set, hoặc tên resource
-              để áp cho mọi tài nguyên loại đó.
-            </li>
-          </Bullets>
+                <Bullets>
+                  <li>
+                    <C>userset</C> chọn người dùng theo thuộc tính <C>user.*</C>; <C>resourceset … on resource</C> chọn tài nguyên theo{" "}
+                    <C>resource.*</C> (có thể so với <C>user.*</C>).
+                  </li>
+                  <li>
+                    <C>permit nhóm-người to nhóm-tài-nguyên: action, …</C> cấp quyền. Vế phải của <C>to</C> là một resource set, hoặc tên
+                    resource để áp cho mọi tài nguyên loại đó.
+                  </li>
+                </Bullets>
 
-          <H3>Điều kiện</H3>
-          <Table
-            head={["Viết", "Nghĩa", "Ví dụ"]}
-            rows={[
-              [<C key="c">== !=</C>, "bằng / khác", <C key="e">user.plan == "pro"</C>],
-              [<C key="c">{">  >=  <  <="}</C>, "so sánh số", <C key="e">user.level &gt;= 3</C>],
-              [<C key="c">in [...] not in [...]</C>, "giá trị nằm / không nằm trong danh sách", <C key="e">user.role in ["a", "b"]</C>],
-              [<C key="c">contains not contains</C>, "mảng chứa / không chứa giá trị", <C key="e">resource.tags contains "public"</C>],
-              [
-                <C key="c">and or ( )</C>,
-                "kết hợp; and được tính trước or, dùng ngoặc để đổi thứ tự",
-                <C key="e">(a == 1 or b == 2) and c == 3</C>,
-              ],
-            ]}
-          />
-          <Bullets>
-            <li>
-              Vế trái là <C>user.tên</C> hoặc <C>resource.tên</C>; thuộc tính lồng nhau viết thêm dấu chấm: <C>user.address.city</C>.
-            </li>
-            <li>
-              Vế phải là chuỗi, số, <C>true</C>/<C>false</C>, <C>null</C>, danh sách <C>[…]</C>, hoặc một thuộc tính khác như{" "}
-              <C>user.key</C> để so hai thuộc tính với nhau.
-            </li>
-            <li>
-              Thuộc tính có sẵn: <C>user.key</C>, <C>user.email</C>, <C>user.first_name</C>, <C>resource.key</C>, <C>resource.type</C>,{" "}
-              <C>resource.tenant</C>.
-            </li>
-          </Bullets>
+                <H3>Điều kiện</H3>
+                <Table
+                  head={["Viết", "Nghĩa", "Ví dụ"]}
+                  rows={[
+                    [<C key="c">== !=</C>, "bằng / khác", <C key="e">user.plan == "pro"</C>],
+                    [<C key="c">{">  >=  <  <="}</C>, "so sánh số", <C key="e">user.level &gt;= 3</C>],
+                    [
+                      <C key="c">in [...] not in [...]</C>,
+                      "giá trị nằm / không nằm trong danh sách",
+                      <C key="e">user.role in ["a", "b"]</C>,
+                    ],
+                    [
+                      <C key="c">contains not contains</C>,
+                      "mảng chứa / không chứa giá trị",
+                      <C key="e">resource.tags contains "public"</C>,
+                    ],
+                    [
+                      <C key="c">and or ( )</C>,
+                      "kết hợp; and được tính trước or, dùng ngoặc để đổi thứ tự",
+                      <C key="e">(a == 1 or b == 2) and c == 3</C>,
+                    ],
+                  ]}
+                />
+                <Bullets>
+                  <li>
+                    Vế trái là <C>user.tên</C> hoặc <C>resource.tên</C>; thuộc tính lồng nhau viết thêm dấu chấm: <C>user.address.city</C>.
+                  </li>
+                  <li>
+                    Vế phải là chuỗi, số, <C>true</C>/<C>false</C>, <C>null</C>, danh sách <C>[…]</C>, hoặc một thuộc tính khác như{" "}
+                    <C>user.key</C> để so hai thuộc tính với nhau.
+                  </li>
+                  <li>
+                    Thuộc tính có sẵn: <C>user.key</C>, <C>user.email</C>, <C>user.first_name</C>, <C>resource.key</C>, <C>resource.type</C>
+                    , <C>resource.tenant</C>.
+                  </li>
+                </Bullets>
 
-          <H3>Dữ liệu</H3>
-          <Code>{`user anne "anne@acme.example" { level: 4, department: "legal" }   // email và thuộc tính là tuỳ chọn
+                <H3>Dữ liệu</H3>
+                <Code>{`user anne "anne@acme.example" { level: 4, department: "legal" }   // email và thuộc tính là tuỳ chọn
   instance document:plan @acme { owner_id: "anne", tags: ["public"] }  // @tenant là tuỳ chọn
   
   assign anne admin @acme              // role cấp tenant; bỏ @tenant thì là default
   assign bob viewer on folder:root     // role trên một tài nguyên cụ thể
   relate folder:root parent document:plan   // folder:root là parent của document:plan`}</Code>
-          <P>
-            Giá trị thuộc tính có thể là chuỗi, số, <C>true</C>/<C>false</C>, <C>null</C>, danh sách <C>[…]</C> hoặc object <C>{"{ … }"}</C>
-            . Quan hệ đọc theo thứ tự <B>subject – relation – object</B>; relation phải được khai báo trong <C>relations</C> của resource
-            phía object.
-          </P>
+                <P>
+                  Giá trị thuộc tính có thể là chuỗi, số, <C>true</C>/<C>false</C>, <C>null</C>, danh sách <C>[…]</C> hoặc object{" "}
+                  <C>{"{ … }"}</C>. Quan hệ đọc theo thứ tự <B>subject – relation – object</B>; relation phải được khai báo trong{" "}
+                  <C>relations</C> của resource phía object.
+                </P>
 
-          <H3>Ca kiểm thử</H3>
-          <Code>{`assert anne can delete document:plan
+                <H3>Ca kiểm thử</H3>
+                <Code>{`assert anne can delete document:plan
   assert bob cannot edit document:plan
   assert anne can read document                                   // không ghi khoá: hỏi theo role cấp tenant
   assert bob can share document:plan @acme with { user.level: 5 } // tenant và thuộc tính tạm thời`}</Code>
-          <P>
-            <C>with {"{ … }"}</C> ghi đè thuộc tính của người dùng hoặc tài nguyên chỉ cho riêng ca này, giống ô Context attributes trong
-            Check.
-          </P>
+                <P>
+                  <C>with {"{ … }"}</C> ghi đè thuộc tính của người dùng hoặc tài nguyên chỉ cho riêng ca này, giống ô Context attributes
+                  trong Check.
+                </P>
 
-          <H3>Ví dụ đầy đủ</H3>
-          <P>File dưới đây dùng mọi cú pháp ở trên và chạy được ngay: dán vào editor (chọn store Blank trước) để thử.</P>
-          <Code>{SYNTAX_EXAMPLE}</Code>
-        </Section>
-        <Section id="cu-phap-json" title="Cú pháp JSON">
-          <P>
-            Dạng JSON mô tả cùng nội dung bằng các object có cấu trúc. Một file là một object với các khoá dưới đây; khoá nào không dùng có
-            thể bỏ. Các phần mô hình cũng có thể đặt chung trong một khoá <C>schema</C>.
-          </P>
-          <Code>{`{
+                <H3>Ví dụ đầy đủ</H3>
+                <P>File dưới đây dùng mọi cú pháp ở trên và chạy được ngay: dán vào editor (chọn store Blank trước) để thử.</P>
+                <Code>{SYNTAX_EXAMPLE}</Code>
+              </>
+            }
+            json={
+              <>
+                <P>
+                  Dạng JSON mô tả cùng nội dung bằng các object có cấu trúc. Một file là một object với các khoá dưới đây; khoá nào không
+                  dùng có thể bỏ. Các phần mô hình cũng có thể đặt chung trong một khoá <C>schema</C>.
+                </P>
+                <Code>{`{
     "tenants": [ … ],
     "resources": [ … ],
     "roles": [ … ],                 // role cấp tenant
@@ -684,8 +728,8 @@ permit bac_si_truc to cung_khoa: read`}</Code>
     "tests": [ … ]
   }`}</Code>
 
-          <H3>Resource</H3>
-          <Code>{`{
+                <H3>Resource</H3>
+                <Code>{`{
     "key": "document",
     "name": "Tài liệu",
     "actions": { "read": {}, "edit": {} },              // hoặc ["read", "edit"]
@@ -702,19 +746,20 @@ permit bac_si_truc to cung_khoa: read`}</Code>
       }
     }
   }`}</Code>
-          <P>
-            <C>granted_to.users_with_role</C> là dạng JSON của <C>derive</C>. <C>roles</C> cũng có thể là một mảng các object có <C>key</C>.
-          </P>
+                <P>
+                  <C>granted_to.users_with_role</C> là dạng JSON của <C>derive</C>. <C>roles</C> cũng có thể là một mảng các object có{" "}
+                  <C>key</C>.
+                </P>
 
-          <H3>Role cấp tenant, tenant</H3>
-          <Code>{`"tenants": [{ "key": "acme", "name": "Acme Corp" }],
+                <H3>Role cấp tenant, tenant</H3>
+                <Code>{`"tenants": [{ "key": "acme", "name": "Acme Corp" }],
   "roles": [{ "key": "admin", "name": "Quản trị", "permissions": ["folder:*", "document:*"] }]`}</Code>
-          <P>
-            Role cấp tenant không có <C>extends</C>; playground báo lỗi nếu gặp.
-          </P>
+                <P>
+                  Role cấp tenant không có <C>extends</C>; playground báo lỗi nếu gặp.
+                </P>
 
-          <H3>User set, resource set và quy tắc</H3>
-          <Code>{`"condition_sets": [
+                <H3>User set, resource set và quy tắc</H3>
+                <Code>{`"condition_sets": [
     { "key": "seniors", "type": "userset",
       "conditions": { "allOf": [
         { "user.level": { "greater-than-equals": 3 } },
@@ -726,38 +771,38 @@ permit bac_si_truc to cung_khoa: read`}</Code>
   "condition_set_rules": [
     { "user_set": "seniors", "permission": "document:read", "resource_set": "own_docs" }
   ]`}</Code>
-          <Bullets>
-            <li>
-              Điều kiện là cây <C>allOf</C> (tất cả đều đúng) và <C>anyOf</C> (ít nhất một đúng), lồng nhau tuỳ ý. Mỗi lá có dạng{" "}
-              <C>{'{ "thuộc tính": { "toán tử": giá trị } }'}</C>.
-            </li>
-            <li>
-              So với một thuộc tính khác: giá trị là <C>{'{ "ref": "user.key" }'}</C>.
-            </li>
-            <li>
-              Mỗi quy tắc cấp đúng một quyền; DSL <C>permit seniors to own_docs: read, edit</C> tương ứng hai quy tắc. <C>resource_set</C>{" "}
-              là tên resource set, hoặc tên resource để áp cho mọi tài nguyên loại đó.
-            </li>
-          </Bullets>
-          <Table
-            head={["DSL", "JSON"]}
-            rows={[
-              [<C key="d">==</C>, <C key="j">equals</C>],
-              [<C key="d">!=</C>, <C key="j">not-equals</C>],
-              [<C key="d">&gt;</C>, <C key="j">greater-than</C>],
-              [<C key="d">&gt;=</C>, <C key="j">greater-than-equals</C>],
-              [<C key="d">&lt;</C>, <C key="j">less-than</C>],
-              [<C key="d">&lt;=</C>, <C key="j">less-than-equals</C>],
-              [<C key="d">in</C>, <C key="j">in</C>],
-              [<C key="d">not in</C>, <C key="j">not-in</C>],
-              [<C key="d">contains</C>, <C key="j">array_contains</C>],
-              [<C key="d">not contains</C>, <C key="j">array_not_contains</C>],
-              [<C key="d">and / or</C>, <C key="j">allOf / anyOf</C>],
-            ]}
-          />
+                <Bullets>
+                  <li>
+                    Điều kiện là cây <C>allOf</C> (tất cả đều đúng) và <C>anyOf</C> (ít nhất một đúng), lồng nhau tuỳ ý. Mỗi lá có dạng{" "}
+                    <C>{'{ "thuộc tính": { "toán tử": giá trị } }'}</C>.
+                  </li>
+                  <li>
+                    So với một thuộc tính khác: giá trị là <C>{'{ "ref": "user.key" }'}</C>.
+                  </li>
+                  <li>
+                    Mỗi quy tắc cấp đúng một quyền; DSL <C>permit seniors to own_docs: read, edit</C> tương ứng hai quy tắc.{" "}
+                    <C>resource_set</C> là tên resource set, hoặc tên resource để áp cho mọi tài nguyên loại đó.
+                  </li>
+                </Bullets>
+                <Table
+                  head={["DSL", "JSON"]}
+                  rows={[
+                    [<C key="d">==</C>, <C key="j">equals</C>],
+                    [<C key="d">!=</C>, <C key="j">not-equals</C>],
+                    [<C key="d">&gt;</C>, <C key="j">greater-than</C>],
+                    [<C key="d">&gt;=</C>, <C key="j">greater-than-equals</C>],
+                    [<C key="d">&lt;</C>, <C key="j">less-than</C>],
+                    [<C key="d">&lt;=</C>, <C key="j">less-than-equals</C>],
+                    [<C key="d">in</C>, <C key="j">in</C>],
+                    [<C key="d">not in</C>, <C key="j">not-in</C>],
+                    [<C key="d">contains</C>, <C key="j">array_contains</C>],
+                    [<C key="d">not contains</C>, <C key="j">array_not_contains</C>],
+                    [<C key="d">and / or</C>, <C key="j">allOf / anyOf</C>],
+                  ]}
+                />
 
-          <H3>Dữ liệu</H3>
-          <Code>{`"data": {
+                <H3>Dữ liệu</H3>
+                <Code>{`"data": {
     "users": [{
       "key": "anne", "email": "anne@acme.example",
       "attributes": { "level": 4 },
@@ -773,28 +818,31 @@ permit bac_si_truc to cung_khoa: read`}</Code>
       { "subject": "folder:root", "relation": "parent", "object": "document:plan" }
     ]
   }`}</Code>
-          <P>
-            Gán role nằm trong từng người dùng: có <C>tenant</C> là role cấp tenant, có <C>resource_instance</C> là role trên một tài
-            nguyên.
-          </P>
+                <P>
+                  Gán role nằm trong từng người dùng: có <C>tenant</C> là role cấp tenant, có <C>resource_instance</C> là role trên một tài
+                  nguyên.
+                </P>
 
-          <H3>Ca kiểm thử</H3>
-          <Code>{`"tests": [
+                <H3>Ca kiểm thử</H3>
+                <Code>{`"tests": [
     { "user": "anne", "action": "delete", "resource": "document:plan", "expected": true },
     { "user": "bob", "action": "share", "resource": "document:plan", "tenant": "acme",
       "expected": true, "context": { "user": { "level": 5 } } }
   ]`}</Code>
 
-          <H3>Ví dụ đầy đủ</H3>
-          <P>
-            Đây là ví dụ đầy đủ của mục Cú pháp DSL, viết dưới dạng JSON (chính là kết quả khi bấm nút <B>JSON</B> trên header).
-          </P>
-          <details className="group my-4 rounded-md border">
-            <summary className="cursor-pointer px-4 py-2 text-[13px] font-medium text-foreground/85 transition-colors hover:bg-accent/50">
-              Mở bản JSON đầy đủ
-            </summary>
-            <pre className="overflow-x-auto border-t bg-code px-4 py-3 font-mono text-[12px] leading-5">{EXAMPLE_JSON}</pre>
-          </details>
+                <H3>Ví dụ đầy đủ</H3>
+                <P>
+                  Đây là ví dụ đầy đủ ở tab DSL, viết dưới dạng JSON (chính là kết quả khi bấm nút <B>JSON</B> trên header).
+                </P>
+                <details className="group my-4 rounded-md border">
+                  <summary className="cursor-pointer px-4 py-2 text-[13px] font-medium text-foreground/85 transition-colors hover:bg-accent/50">
+                    Mở bản JSON đầy đủ
+                  </summary>
+                  <pre className="overflow-x-auto border-t bg-code px-4 py-3 font-mono text-[12px] leading-5">{EXAMPLE_JSON}</pre>
+                </details>
+              </>
+            }
+          />
         </Section>
         <Section id="dsl-json" title="Chuyển đổi DSL ↔ JSON">
           <P>
