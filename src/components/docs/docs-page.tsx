@@ -497,45 +497,35 @@ permit bac_si_truc to cung_khoa: read`}</Code>
             Có sẵn tài liệu nghiệp vụ (quy trình, SRS, bảng chức năng, ma trận phân quyền)? Hãy để AI chatbot đọc tài liệu và đề xuất thiết
             kế phân quyền, rồi thử ngay trên playground này. Bạn không cần biết RBAC, ReBAC hay ABAC.
           </P>
-          <div className="my-4 flex flex-wrap gap-2">
-            <a
-              href={`${import.meta.env.BASE_URL}downloads/thiet-ke-phan-quyen.zip`}
-              download
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition-transform hover:-translate-y-px active:translate-y-0"
-            >
-              <Download className="size-4" /> Skill thiết kế phân quyền
-            </a>
-            <a
-              href={`${import.meta.env.BASE_URL}downloads/truc-quan-phan-quyen.zip`}
-              download
-              className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-[13.5px] font-medium transition-transform hover:-translate-y-px active:translate-y-0"
-            >
-              <Download className="size-4" /> Skill rà soát (tuỳ chọn)
-            </a>
-          </div>
+          <a
+            href={`${import.meta.env.BASE_URL}downloads/thiet-ke-phan-quyen.zip`}
+            download
+            className="my-4 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13.5px] font-medium text-primary-foreground transition-transform hover:-translate-y-px active:translate-y-0"
+          >
+            <Download className="size-4" /> Tải skill thiết kế phân quyền (.zip)
+          </a>
+          <P>
+            Tải file zip lên phần cài đặt Skill của chatbot (ví dụ Claude: Settings › Capabilities › Skills), mở cuộc trò chuyện mới và đính
+            kèm tài liệu nghiệp vụ. Sau đó:
+          </P>
           <Steps>
             <Step>
-              <B>Thêm skill vào chatbot.</B> Trong phần cài đặt Skill của chatbot (ví dụ Claude: Settings › Capabilities › Skills), tải lên
-              file zip vừa tải về.
+              Gõ <C>/thiet-ke-phan-quyen</C>.
+            </Step>
+            <Step>AI hỏi câu hỏi nghiệp vụ.</Step>
+            <Step>AI hỏi BA quyết từng nhóm đề xuất ngay trong chat.</Step>
+            <Step>
+              AI xuất bản xem trước thành <B>Artifact</B>. BA duyệt và bình luận trên trang; AI sửa, cập nhật trang ở cùng link và trả lời
+              trong bình luận.
             </Step>
             <Step>
-              <B>Gửi tài liệu.</B> Mở cuộc trò chuyện mới, đính kèm tài liệu (Word, PDF, Excel, drawio) và gõ <C>/thiet-ke-phan-quyen</C>.
-            </Step>
-            <Step>
-              <B>Trả lời câu hỏi.</B> AI hỏi các điểm tài liệu chưa rõ, mỗi câu có sẵn phương án; chọn phương án đề xuất nếu chưa chắc.
-            </Step>
-            <Step>
-              <B>Rà soát.</B> AI liệt kê quyền theo từng vai trò. Trả lời <B>Đúng</B>, hoặc <B>Sai</B> kèm cách đúng, ngay trong cuộc trò
-              chuyện.
-            </Step>
-            <Step>
-              <B>Cập nhật.</B> Gõ <C>/thiet-ke-phan-quyen cap-nhat</C>. Lặp bước 4–5 tới khi mọi quyền đã được xác nhận.
-            </Step>
-            <Step>
-              <B>Thử trên playground.</B> Tải file <C>.dsl</C> AI xuất ra, bấm <B>Import</B> ở playground. Tab Tests báo “x of y tests
-              pass”: đạt hết là thiết kế đúng ý đồ.
+              BA xác nhận, AI xuất <B>JSON</B> và <B>DSL</B> theo bản mới nhất. Chưa xác nhận thì công cụ chặn không cho xuất.
             </Step>
           </Steps>
+          <P>
+            Có file <C>.dsl</C> rồi, bấm <B>Import</B> trên playground để thử: tab <B>Tests</B> báo “x of y tests pass”, đạt hết là thiết kế
+            đúng ý đồ.
+          </P>
           <Table
             head={["Nhãn trên mỗi quyền", "Nghĩa là"]}
             rows={[
