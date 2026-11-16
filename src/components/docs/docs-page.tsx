@@ -215,37 +215,151 @@ function Content() {
           </button>
         </Section>
         <Section id="mo-hinh" title="Ba mô hình phân quyền">
-          <P>Playground hỗ trợ cả ba mô hình phân quyền phổ biến, và bạn có thể kết hợp chúng trong cùng một file.</P>
+          <P>
+            Mọi hệ thống phân quyền đều trả lời một câu hỏi: <B>Ai được làm gì với cái gì?</B> Ví dụ: “Anh Bình có được <B>sửa</B>{" "}
+            <B>bản kế hoạch quý 3</B> không?”. Ba mô hình dưới đây là ba cách khác nhau để trả lời câu hỏi đó.
+          </P>
+
+          <H3>Các khái niệm cơ bản</H3>
           <Table
-            head={["Mô hình", "Ý tưởng", "Ví dụ trong DSL"]}
+            head={["Thuật ngữ", "Nghĩa là", "Ví dụ"]}
             rows={[
+              [<B key="t">Người dùng (user)</B>, "Người cần được cấp hoặc từ chối quyền.", "anh Bình, chị Mai"],
+              [<B key="t">Tài nguyên (resource)</B>, "Loại thứ cần bảo vệ.", "tài liệu, thư mục, hoá đơn"],
+              [<B key="t">Bản ghi (instance)</B>, "Một tài nguyên cụ thể.", "bản kế hoạch quý 3, thư mục “Kế toán”"],
+              [<B key="t">Hành động (action)</B>, "Việc có thể làm với tài nguyên.", "xem, sửa, xoá, chia sẻ"],
+              [<B key="t">Vai trò (role)</B>, "Một nhóm quyền đặt tên, gán cho người dùng.", "Quản trị, Người chỉnh sửa, Người xem"],
+              [<B key="t">Tenant</B>, "Một tổ chức hoặc đơn vị độc lập, dữ liệu tách biệt với nhau.", "công ty Acme, công ty Globex"],
               [
-                <KindBadge key="m" kind="rbac" />,
-                <>
-                  Theo <B>vai trò trong tenant</B>. Ai là <C>admin</C> của tenant <C>acme</C> thì được mọi quyền trên tài nguyên của acme.
-                </>,
-                <C key="e">role admin: document:*</C>,
-              ],
-              [
-                <KindBadge key="m" kind="rebac" />,
-                <>
-                  Theo <B>quan hệ giữa các đối tượng</B>. Chủ thư mục là chủ mọi tài liệu nằm trong thư mục đó.
-                </>,
-                <C key="e">derive owner from folder#owner via parent</C>,
-              ],
-              [
-                <KindBadge key="m" kind="abac" />,
-                <>
-                  Theo <B>thuộc tính</B> của người dùng và tài nguyên, ví dụ bác sĩ trực ca chỉ xem hồ sơ cùng khoa.
-                </>,
-                <C key="e">userset pros where user.plan == "pro"</C>,
+                <B key="t">Thuộc tính (attribute)</B>,
+                "Đặc điểm của người dùng hoặc tài nguyên.",
+                "phòng ban, cấp bậc, trạng thái “đã khoá”",
               ],
             ]}
           />
+
+          <H3>
+            <KindBadge kind="rbac" className="mr-2 align-middle" /> RBAC: phân quyền theo vai trò
+          </H3>
           <P>
-            Màu xanh dương, vàng và xanh ngọc ở trên được dùng nhất quán trong toàn bộ playground: trên đồ thị, trong Matrix và trong phần
-            giải thích của Check.
+            Giống <B>chức danh trong công ty</B>. Chức danh “Kế toán” được xem và sửa hoá đơn; ai được giao chức danh này thì có các quyền
+            đó. Khi một người chuyển công việc, bạn chỉ cần đổi chức danh của họ, không phải sửa từng quyền.
           </P>
+          <Code>{`role ke_toan "Kế toán": invoice:read, invoice:edit
+assign binh ke_toan @acme`}</Code>
+          <P>
+            <B>Đọc là:</B> vai trò Kế toán được xem và sửa hoá đơn; anh Bình là Kế toán ở công ty Acme. Vì vai trò gắn với tenant, anh Bình
+            chỉ có quyền trên hoá đơn <B>của Acme</B>; ở công ty khác anh có thể giữ vai trò khác hoặc không có vai trò nào.
+          </P>
+          <Bullets>
+            <li>
+              <B>Ưu điểm:</B> đơn giản, dễ giải thích, dễ quản lý khi tổ chức có ít vai trò rõ ràng.
+            </li>
+            <li>
+              <B>Hạn chế:</B> không phân biệt từng bản ghi. Kế toán xem được <B>mọi</B> hoá đơn của công ty, không thể nói “chỉ hoá đơn do
+              mình phụ trách”.
+            </li>
+            <li>
+              <B>Phù hợp khi:</B> quyền phụ thuộc vào công việc của người đó, không phụ thuộc vào bản ghi cụ thể.
+            </li>
+          </Bullets>
+
+          <H3>
+            <KindBadge kind="rebac" className="mr-2 align-middle" /> ReBAC: phân quyền theo mối quan hệ
+          </H3>
+          <P>
+            Giống cách <B>Google Drive</B> hoạt động. Khi bạn chia sẻ một thư mục cho đồng nghiệp với quyền “Người chỉnh sửa”, họ chỉnh sửa
+            được <B>mọi tài liệu bên trong</B> thư mục đó, kể cả tài liệu tạo sau này. Quyền đi theo mối quan hệ: tài liệu <B>nằm trong</B>{" "}
+            thư mục, thư mục <B>nằm trong</B> thư mục cha. Ví dụ khác: trưởng phòng xem được hồ sơ của mọi nhân viên <B>thuộc</B> phòng
+            mình.
+          </P>
+          <Code>{`resource document {
+  actions read, edit
+  relations { parent: folder }          // tài liệu nằm trong một thư mục
+  role editor: read, edit
+  derive editor from folder#editor via parent
+}
+assign mai editor on folder:ke_hoach   // chị Mai chỉnh sửa thư mục "Kế hoạch"
+relate folder:ke_hoach parent document:q3`}</Code>
+          <P>
+            <B>Đọc là:</B> ai là người chỉnh sửa của thư mục chứa tài liệu thì cũng là người chỉnh sửa của tài liệu. Chị Mai chỉnh sửa thư
+            mục “Kế hoạch”, bản kế hoạch quý 3 nằm trong thư mục đó, nên chị Mai sửa được bản kế hoạch quý 3. Không ai phải cấp quyền riêng
+            cho từng tài liệu.
+          </P>
+          <Bullets>
+            <li>
+              <B>Ưu điểm:</B> phân quyền tới <B>từng bản ghi</B>, và quyền tự động lan theo cấu trúc (thư mục, phòng ban, dự án).
+            </li>
+            <li>
+              <B>Hạn chế:</B> phải khai báo các mối quan hệ; khi chuỗi quan hệ dài sẽ khó hình dung vì sao một người có quyền. Đồ thị và
+              phần “Granted by” trong tab Check giúp bạn nhìn thấy chuỗi đó.
+            </li>
+            <li>
+              <B>Phù hợp khi:</B> dữ liệu có cấu trúc cây hoặc thuộc về ai đó: thư mục và tài liệu, đơn vị và cấp trên, dự án và thành viên.
+            </li>
+          </Bullets>
+
+          <H3>
+            <KindBadge kind="abac" className="mr-2 align-middle" /> ABAC: phân quyền theo thuộc tính
+          </H3>
+          <P>
+            Giống <B>nội quy có điều kiện</B>: “Bác sĩ chỉ xem hồ sơ bệnh nhân <B>cùng khoa</B> và <B>khi đang trực</B>”, “Tài liệu gắn nhãn{" "}
+            <B>công khai</B> thì ai cũng đọc được”, “Bạn sửa được bài viết <B>của chính mình</B> khi bài <B>chưa bị khoá</B>”. Quyền không
+            gắn với chức danh hay quan hệ, mà với <B>đặc điểm</B> của người và của tài liệu tại thời điểm hỏi.
+          </P>
+          <Code>{`userset bac_si_truc where user.title == "doctor" and user.on_shift == true
+resourceset cung_khoa on record where resource.department == user.department
+permit bac_si_truc to cung_khoa: read`}</Code>
+          <P>
+            <B>Đọc là:</B> nhóm “bác sĩ đang trực” gồm những người có chức danh bác sĩ và đang trong ca trực; nhóm “hồ sơ cùng khoa” gồm hồ
+            sơ thuộc đúng khoa của người hỏi; nhóm thứ nhất được xem nhóm thứ hai. Khi bác sĩ hết ca, quyền tự mất mà không ai phải thu hồi.
+          </P>
+          <Bullets>
+            <li>
+              <B>Ưu điểm:</B> rất linh hoạt, diễn đạt được các quy tắc theo ngữ cảnh (thời gian, trạng thái, phòng ban, cấp độ bảo mật).
+            </li>
+            <li>
+              <B>Hạn chế:</B> quy tắc phức tạp dễ sai mà khó nhận ra. Hãy viết ca kiểm thử (tab Tests) cho các tình huống quan trọng.
+            </li>
+            <li>
+              <B>Phù hợp khi:</B> quyền phụ thuộc vào tình huống hoặc vào nội dung của bản ghi, không chỉ vào người.
+            </li>
+          </Bullets>
+
+          <H3>So sánh nhanh</H3>
+          <Table
+            head={["", "RBAC", "ReBAC", "ABAC"]}
+            rows={[
+              ["Câu hỏi đặt ra", "Bạn giữ vai trò gì?", "Bạn có quan hệ gì với thứ này?", "Bạn và thứ này có đặc điểm gì?"],
+              ["Ví dụ đời thường", "Chức danh trong công ty", "Chia sẻ thư mục trên Google Drive", "Nội quy có điều kiện"],
+              ["Mức chi tiết", "Theo loại tài nguyên", "Tới từng bản ghi", "Tới từng bản ghi, theo ngữ cảnh"],
+              ["Cần chuẩn bị", "Danh sách vai trò", "Các mối quan hệ giữa dữ liệu", "Thuộc tính của người và dữ liệu"],
+              ["Dễ hiểu", "Dễ nhất", "Trung bình", "Cần cẩn thận"],
+            ]}
+          />
+
+          <H3>Kết hợp cả ba</H3>
+          <P>
+            Trong cùng một file, bạn có thể dùng cả ba mô hình. Một yêu cầu được <B>cho phép</B> nếu <B>ít nhất một</B> mô hình cho phép;
+            chỉ khi cả ba đều không cho phép thì mới bị từ chối. Trong store mẫu <B>Drive</B>:
+          </P>
+          <Bullets>
+            <li>
+              <KindBadge kind="rebac" /> Alice xoá được tài liệu rfc-042 vì chị là chủ thư mục gốc, và quyền chủ đi xuống qua từng thư mục
+              con.
+            </li>
+            <li>
+              <KindBadge kind="rbac" /> Dave đọc được mọi tài liệu của Acme vì anh có vai trò Kiểm toán (auditor) trong tenant Acme.
+            </li>
+            <li>
+              <KindBadge kind="abac" /> Cindy sửa được rfc-042 dù chỉ là người xem thư mục, vì chị là tác giả và tài liệu chưa bị khoá.
+            </li>
+          </Bullets>
+          <Callout>
+            <B>Nên bắt đầu từ đâu?</B> Hầu hết hệ thống bắt đầu bằng <B>RBAC</B>. Thêm <B>ReBAC</B> khi cần quyền theo từng thư mục, dự án
+            hay đơn vị. Thêm <B>ABAC</B> cho những quy tắc có điều kiện đặc biệt. Màu xanh dương, vàng và xanh ngọc của ba nhãn trên được
+            dùng nhất quán trong toàn bộ playground: trên đồ thị, trong Matrix và trong phần giải thích của Check.
+          </Callout>
         </Section>
         <Section id="man-hinh" title="Các khu vực trên màn hình">
           <P>Màn hình chia thành bốn khu vực, đánh số trong ảnh dưới đây.</P>

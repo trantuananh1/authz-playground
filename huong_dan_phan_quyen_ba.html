@@ -1,0 +1,307 @@
+<title>Thiết kế phân quyền cho BA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Bố cục: một cột đọc, mục lục dính bên trái trên màn rộng; mỗi bước là một khối có số thứ tự vì đây là quy trình thật */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --fg:#1b2430; --muted:#5b6675; --line:#dde2e8;
+  --accent:#1d5fa8; --accent-soft:#e6eef8; --ok:#2f7d4f; --ok-soft:#e5f3ea; --warn:#9a6a12; --warn-soft:#fbf2df;
+  --code-bg:#eef1f5;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161c; --surface:#1a2029; --fg:#e4e9f0; --muted:#9aa5b4; --line:#2c3440;
+  --accent:#7fb2ec; --accent-soft:#1d2a3b; --ok:#7cc79a; --ok-soft:#1b2c22; --warn:#e2b75f; --warn-soft:#2e2615;
+  --code-bg:#232b36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161c; --surface:#1a2029; --fg:#e4e9f0; --muted:#9aa5b4; --line:#2c3440;
+  --accent:#7fb2ec; --accent-soft:#1d2a3b; --ok:#7cc79a; --ok-soft:#1b2c22; --warn:#e2b75f; --warn-soft:#2e2615;
+  --code-bg:#232b36; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px}
+nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:14px}
+nav p{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+nav ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav a{display:block;padding:5px 10px;border-radius:6px;color:var(--muted);text-decoration:none}
+nav a:hover,nav a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+main{min-width:0;max-width:760px}
+header h1{font-size:32px;line-height:1.25;margin:0 0 10px;text-wrap:balance;font-weight:700}
+header .lead{font-size:18px;color:var(--muted);margin:0}
+h2{font-size:22px;margin:0 0 12px;text-wrap:balance;font-weight:700}
+h3{font-size:17px;margin:20px 0 8px;font-weight:600}
+section{padding-top:40px}
+p{margin:0 0 12px}
+a{color:var(--accent)}
+code,kbd{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere}
+.cmd{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0 14px}
+.cmd code{background:none;padding:0;font-size:15px;flex:1;min-width:0}
+.cmd button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer}
+.cmd button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
+.flow li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
+.flow li b{color:var(--accent);margin-right:6px;font-variant-numeric:tabular-nums}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:16px}
+.num{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+.who{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-bottom:8px}
+.who.ba{background:var(--ok-soft);color:var(--ok)}
+.who.ai{background:var(--accent-soft);color:var(--accent)}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0}
+.note.tip{border-color:var(--ok);background:var(--ok-soft)}
+ul,ol.plain{margin:0 0 12px;padding-left:22px}
+li{margin:3px 0}
+.tbl{overflow-x:auto;margin:10px 0 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:none}
+td:first-child{white-space:nowrap}
+@media (max-width:820px){.wrap{grid-template-columns:1fr;gap:16px}nav{position:static}nav ol{flex-direction:row;flex-wrap:wrap}header h1{font-size:26px}.step{grid-template-columns:1fr}.num{width:36px;height:36px;font-size:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<nav aria-label="Mục lục">
+  <p>Mục lục</p>
+  <ol>
+    <li><a href="#tong-quan">Tổng quan</a></li>
+    <li><a href="#chuan-bi">Chuẩn bị một lần</a></li>
+    <li><a href="#b1">1. Đặt tài liệu</a></li>
+    <li><a href="#b2">2. Gọi lệnh thiết kế</a></li>
+    <li><a href="#b3">3. Trả lời câu hỏi</a></li>
+    <li><a href="#b4">4. Rà soát trên giao diện</a></li>
+    <li><a href="#b5">5. Cập nhật thiết kế</a></li>
+    <li><a href="#b6">6. Thử trên playground</a></li>
+    <li><a href="#lenh">Bảng lệnh</a></li>
+    <li><a href="#tu-ngu">Từ ngữ trên playground</a></li>
+    <li><a href="#luu-y">Lưu ý, sự cố</a></li>
+  </ol>
+</nav>
+
+<main>
+<header>
+  <h1>Thiết kế phân quyền từ tài liệu nghiệp vụ</h1>
+  <p class="lead">Hướng dẫn dành cho BA: từ tài liệu nghiệp vụ (Word, PDF, Excel, drawio) tới chính sách phân quyền chạy thử được trên playground vAuthz. BA chỉ cần gõ lệnh, trả lời câu hỏi nghiệp vụ và bấm Đúng / Sai; không cần biết RBAC, ReBAC hay ABAC.</p>
+  <ul class="flow" aria-label="Các bước">
+    <li><b>1</b>Đặt tài liệu</li><li><b>2</b>Gõ lệnh</li><li><b>3</b>Trả lời câu hỏi</li><li><b>4</b>Rà soát Đúng / Sai</li><li><b>5</b>Cập nhật</li><li><b>6</b>Xem trên playground</li>
+  </ul>
+</header>
+
+<section id="tong-quan">
+  <h2>Tổng quan</h2>
+  <p>Bộ công cụ gồm hai skill chạy trong Claude (thẻ <b>Code</b> của ứng dụng Claude trên máy tính, hoặc Claude Code):</p>
+  <div class="tbl"><table>
+    <tr><th>Lệnh</th><th>Việc làm</th></tr>
+    <tr><td><code>/thiet-ke-phan-quyen</code></td><td>Đọc tài liệu, đề xuất vai trò, dữ liệu, quyền và phạm vi; tự áp quy định chung (duyệt thì được xem, cấp trên xem cấp dưới, người lập không tự duyệt…); tự kiểm tra nguyên tắc; xuất tệp import và tệp chạy thử trên playground.</td></tr>
+    <tr><td><code>/truc-quan-phan-quyen</code></td><td>Mở giao diện rà soát trên máy: BA đọc từng câu mô tả theo vai trò và bấm Đúng / Sai, trả lời câu hỏi, xuất biên bản.</td></tr>
+  </table></div>
+  <p>Mỗi quyền trong thiết kế mang một trong bốn nhãn nguồn gốc, giúp BA biết chỗ nào lấy từ tài liệu và chỗ nào do AI suy ra:</p>
+  <div class="tbl"><table>
+    <tr><th>Nhãn</th><th>Ý nghĩa</th></tr>
+    <tr><td>Theo tài liệu</td><td>Tài liệu nêu, AI giữ nguyên.</td></tr>
+    <tr><td>Theo quy định chung</td><td>Suy ra từ bộ quy định kế thừa đã duyệt; chỉ là quyền xem hoặc ràng buộc, không bao giờ là quyền ghi.</td></tr>
+    <tr><td>AI đề xuất thêm</td><td>Tài liệu không nêu; AI thêm theo nguyên tắc, kèm lý do.</td></tr>
+    <tr><td>AI đề xuất bỏ</td><td>Tài liệu nêu nhưng trái nguyên tắc (ví dụ một người vừa lập vừa duyệt); AI đề nghị bỏ, kèm lý do.</td></tr>
+  </table></div>
+</section>
+
+<section id="chuan-bi">
+  <h2>Chuẩn bị một lần trên mỗi máy</h2>
+  <ol class="plain">
+    <li>Cài ứng dụng Claude trên máy tính (dùng thẻ <b>Code</b>) hoặc Claude Code.</li>
+    <li>Cài Python 3.10 trở lên. Khi cài trên Windows, đánh dấu ô <b>Add Python to PATH</b>.</li>
+    <li>Giải nén tệp <code>bo_skill_phan_quyen.zip</code> vào thư mục <code>C:\Users\&lt;tên đăng nhập&gt;\.claude\skills\</code>. Sau khi giải nén phải có đúng hai thư mục <code>thiet-ke-phan-quyen</code> và <code>truc-quan-phan-quyen</code> nằm ngay trong <code>skills</code>.</li>
+    <li>Mở lại ứng dụng Claude. Gõ <kbd>/</kbd> trong ô chat: danh sách gợi ý có <code>thiet-ke-phan-quyen</code> và <code>truc-quan-phan-quyen</code> là đã cài xong.</li>
+  </ol>
+</section>
+
+<section id="b1">
+  <div class="step"><div class="num" aria-hidden="true">1</div><div>
+    <span class="who ba">BA làm</span>
+    <h2>Đặt tài liệu vào một thư mục</h2>
+    <p>Tạo một thư mục cho phân hệ cần thiết kế và chép tài liệu nghiệp vụ vào đó. Các dạng đọc được:</p>
+    <ul>
+      <li>Tài liệu quy trình, SRS, tài liệu khảo sát: <code>.docx</code>, <code>.pdf</code>, <code>.md</code>.</li>
+      <li>Bảng chức năng / usecase có cột tác nhân.</li>
+      <li>Ma trận phân quyền Excel (dòng chức năng, cột vai trò): nếu có, AI còn đo độ khớp giữa thiết kế và ma trận.</li>
+      <li>Sơ đồ quy trình <code>.drawio</code> có làn.</li>
+    </ul>
+    <p>Trong ứng dụng Claude, mở phiên mới và chọn thư mục này làm thư mục làm việc.</p>
+  </div></div>
+</section>
+
+<section id="b2">
+  <div class="step"><div class="num" aria-hidden="true">2</div><div>
+    <span class="who ba">BA gõ lệnh</span>
+    <h2>Gọi lệnh thiết kế</h2>
+    <p>Chỉ cần gõ tên lệnh, không cần mô tả gì thêm:</p>
+    <div class="cmd"><code>/thiet-ke-phan-quyen</code><button type="button" data-copy="/thiet-ke-phan-quyen">Chép</button></div>
+    <p>AI tự tìm tài liệu trong thư mục. Có một tài liệu thì dùng luôn; có nhiều tài liệu thì AI hỏi BA chọn. Muốn chỉ định tài liệu, gõ tên tệp sau lệnh:</p>
+    <div class="cmd"><code>/thiet-ke-phan-quyen QuyTrinh_Ban_PNQD.docx</code><button type="button" data-copy="/thiet-ke-phan-quyen QuyTrinh_Ban_PNQD.docx">Chép</button></div>
+    <span class="who ai">AI làm tiếp, liền một mạch</span>
+    <ol class="plain">
+      <li>Đọc tài liệu, lập danh sách giao dịch «ai – làm gì».</li>
+      <li>Hỏi BA các điểm nghiệp vụ không phổ biến (bước 3).</li>
+      <li>Lập thiết kế, tự kiểm tra nguyên tắc, sửa tới khi không còn lỗi.</li>
+      <li>Mở giao diện rà soát.</li>
+      <li>Xuất tệp import cho hệ thống phân quyền và các tệp chạy thử trên playground.</li>
+      <li>Nạp một tệp nhỏ lên playground và báo số câu kiểm thử đạt.</li>
+    </ol>
+    <p>Kết quả nằm trong thư mục mới <code>thiet_ke_&lt;tên tài liệu&gt;</code> đặt cạnh tài liệu. Cuối cùng AI báo: số vai trò, số quyền theo từng nhãn, số câu BA cần xác nhận, các quyết định thiết kế chính và các lệnh dùng tiếp.</p>
+  </div></div>
+</section>
+
+<section id="b3">
+  <div class="step"><div class="num" aria-hidden="true">3</div><div>
+    <span class="who ba">BA trả lời</span>
+    <h2>Trả lời câu hỏi nghiệp vụ</h2>
+    <p>Trước khi thiết kế, AI hỏi những điểm mà tài liệu và quy định chung chưa trả lời được, ví dụ: ai duyệt ở cấp đơn vị, thông tin nhạy cảm cho ai xem, một bộ phận chỉ xem hay được sửa. Mỗi câu hiện dạng lựa chọn; phương án AI khuyến nghị đứng đầu.</p>
+    <ul>
+      <li>Chọn một phương án, hoặc chọn <b>Other</b> để tự gõ câu trả lời.</li>
+      <li>Câu nào chưa trả lời được ngay: chọn phương án khuyến nghị. AI ghi câu đó lên giao diện rà soát để trả lời sau.</li>
+    </ul>
+    <div class="note tip">Trả lời kỹ ở bước này giúp tiết kiệm thời gian: một câu trả lời thường thay đổi nhiều quyền cùng lúc.</div>
+  </div></div>
+</section>
+
+<section id="b4">
+  <div class="step"><div class="num" aria-hidden="true">4</div><div>
+    <span class="who ba">BA rà soát</span>
+    <h2>Rà soát trên giao diện</h2>
+    <p>Giao diện tự mở sau bước 2 (địa chỉ dạng <code>http://localhost:4190/</code>). Muốn mở lại vào lúc khác, gõ:</p>
+    <div class="cmd"><code>/truc-quan-phan-quyen</code><button type="button" data-copy="/truc-quan-phan-quyen">Chép</button></div>
+    <p>Thứ tự làm việc trên giao diện:</p>
+    <ol class="plain">
+      <li>Ghi tên vào ô <b>Người rà soát</b>.</li>
+      <li>Thẻ <b>Câu hỏi cho BA</b>: trả lời các câu còn để mở.</li>
+      <li>Thẻ <b>Theo vai trò</b>: chọn từng vai trò, đọc từng câu và bấm <b>Đúng</b> hoặc <b>Sai</b>. Bấm <b>Vì sao?</b> để xem câu trích tài liệu, quy định chung hoặc lý do của AI. Câu sai nên ghi chú cách đúng.</li>
+      <li>Bật <b>Chỉ hiện câu chưa xác nhận</b> để làm tiếp phần còn lại; thanh tiến độ cho biết đã xác nhận bao nhiêu câu.</li>
+      <li>Thẻ <b>Biên bản</b>: tải biên bản rà soát (<code>.md</code>) khi xong.</li>
+    </ol>
+    <div class="tbl"><table>
+      <tr><th>Bấm</th><th>Trên câu có nhãn</th><th>Kết quả</th></tr>
+      <tr><td>Đúng</td><td>bất kỳ</td><td>Giữ nguyên.</td></tr>
+      <tr><td>Sai</td><td>AI đề xuất thêm</td><td>Quyền bị bỏ, tự áp khi cập nhật.</td></tr>
+      <tr><td>Sai</td><td>AI đề xuất bỏ</td><td>Giữ lại quyền tài liệu nêu, tự áp khi cập nhật.</td></tr>
+      <tr><td>Sai</td><td>Theo tài liệu / theo quy định chung</td><td>AI đọc lại tài liệu và ghi chú để sửa thiết kế.</td></tr>
+    </table></div>
+    <p>Các thẻ <b>Ma trận quyền</b>, <b>Tổng quan</b>, <b>Kiểm tra nguyên tắc</b>, <b>Truy vết giao dịch</b> dành cho SA, dev; BA không bắt buộc xem.</p>
+  </div></div>
+</section>
+
+<section id="b5">
+  <div class="step"><div class="num" aria-hidden="true">5</div><div>
+    <span class="who ba">BA gõ lệnh</span>
+    <h2>Cập nhật thiết kế theo ý kiến rà soát</h2>
+    <p>Rà soát xong, quay lại cửa sổ Claude và gõ:</p>
+    <div class="cmd"><code>/thiet-ke-phan-quyen cap-nhat</code><button type="button" data-copy="/thiet-ke-phan-quyen cap-nhat">Chép</button></div>
+    <p>AI đọc ý kiến rà soát, sửa thiết kế, kiểm tra lại, xuất lại tệp import và tệp playground. Trên giao diện, bấm <b>Tải lại</b> để thấy bản mới. Nếu một nhóm quyền đã thay đổi, AI báo những câu cần xác nhận lại.</p>
+    <p>Lặp bước 4 và 5 tới khi mọi câu đã được xác nhận.</p>
+  </div></div>
+</section>
+
+<section id="b6">
+  <div class="step"><div class="num" aria-hidden="true">6</div><div>
+    <span class="who ba">BA xem</span>
+    <h2>Thử chính sách trên playground</h2>
+    <p>Playground vAuthz: <a href="https://trantuananh1.github.io/authz-playground/" target="_blank" rel="noopener">trantuananh1.github.io/authz-playground</a>. Trang chạy hoàn toàn trong trình duyệt; chân trang ghi rõ không gửi dữ liệu đi đâu.</p>
+    <h3>Chọn tệp để nạp</h3>
+    <ul>
+      <li><code>playground_theo_mang\&lt;mảng&gt;.dsl</code>: mỗi tệp một mảng nghiệp vụ, 10–40 KB. Nên dùng các tệp này.</li>
+      <li><code>playground.dsl</code>: toàn bộ phân hệ; với phân hệ lớn, sơ đồ rối và trang chạy chậm.</li>
+      <li>Muốn xem riêng một, hai loại dữ liệu cho dễ nhìn, gõ lệnh kèm key tài nguyên (AI gợi ý key ở cuối bước 2):</li>
+    </ul>
+    <div class="cmd"><code>/thiet-ke-phan-quyen dsl truong_mam_non,can_bo_mam_non</code><button type="button" data-copy="/thiet-ke-phan-quyen dsl truong_mam_non,can_bo_mam_non">Chép</button></div>
+    <h3>Nạp tệp</h3>
+    <ul>
+      <li><b>AI tự nạp</b> nếu ứng dụng Claude có trình duyệt tích hợp: gõ <code>/thiet-ke-phan-quyen playground</code> (kèm tên tệp nếu muốn tệp cụ thể).</li>
+      <li><b>Tự nạp</b> trong trình duyệt của mình: mở playground, bấm <b>Import</b> và chọn tệp <code>.dsl</code>.</li>
+    </ul>
+    <h3>Đọc kết quả</h3>
+    <div class="tbl"><table>
+      <tr><th>Chỗ xem</th><th>Ý nghĩa</th></tr>
+      <tr><td>Valid ✓ (góc trên)</td><td>Tệp đúng cú pháp.</td></tr>
+      <tr><td>Thẻ Tests</td><td>Dòng «x of y tests pass». Mỗi câu kiểm thử là một khẳng định như «Trợ lý CTQC đơn vị A <b>can</b> xem trường mầm non 1» (được) hoặc «<b>cannot</b> xem trường mầm non 2» (không được). Đạt hết nghĩa là chính sách đúng ý đồ thiết kế.</td></tr>
+      <tr><td>Thẻ Check</td><td>Tự hỏi một câu: chọn người dùng (User), hành động (Action), bản ghi (Resource), tenant <code>mac_dinh</code>; trang trả lời được hay không và theo đường nào.</td></tr>
+      <tr><td>Graph</td><td>Sơ đồ vai trò, dữ liệu và quan hệ. Rê chuột lên một nút để xem chi tiết. Mũi tên quan hệ đi từ cấp trên xuống cấp dưới.</td></tr>
+      <tr><td>Policy › Matrix</td><td>Bảng vai trò × hành động cho từng loại dữ liệu.</td></tr>
+      <tr><td>Thẻ Problems</td><td>Cảnh báo «Resource 'don_vi' has no actions» là bình thường: cây đơn vị chỉ dùng để tính phạm vi.</td></tr>
+    </table></div>
+  </div></div>
+</section>
+
+<section id="lenh">
+  <h2>Bảng lệnh</h2>
+  <div class="tbl"><table>
+    <tr><th>Gõ</th><th>Khi nào</th></tr>
+    <tr><td><code>/thiet-ke-phan-quyen</code></td><td>Bắt đầu thiết kế từ tài liệu trong thư mục. Nếu thư mục đã có thiết kế, AI hỏi cập nhật hay làm mới.</td></tr>
+    <tr><td><code>/thiet-ke-phan-quyen &lt;tệp&gt; [&lt;tệp&gt; …]</code></td><td>Thiết kế mới từ đúng các tệp chỉ định.</td></tr>
+    <tr><td><code>/thiet-ke-phan-quyen cap-nhat</code></td><td>Sau mỗi lượt rà soát trên giao diện.</td></tr>
+    <tr><td><code>/thiet-ke-phan-quyen dsl &lt;key&gt;,&lt;key&gt;</code></td><td>Xuất tệp playground chỉ gồm vài loại dữ liệu.</td></tr>
+    <tr><td><code>/thiet-ke-phan-quyen playground [&lt;tệp&gt;]</code></td><td>Nạp một tệp lên playground (cần trình duyệt tích hợp).</td></tr>
+    <tr><td><code>/truc-quan-phan-quyen</code></td><td>Mở lại giao diện rà soát.</td></tr>
+  </table></div>
+</section>
+
+<section id="ket-qua">
+  <h2>Các tệp trong thư mục thiết kế</h2>
+  <div class="tbl"><table>
+    <tr><th>Tệp</th><th>Dùng để</th></tr>
+    <tr><td><code>thiet_ke_phan_quyen.json</code></td><td>Bản thiết kế; giao diện rà soát đọc tệp này.</td></tr>
+    <tr><td><code>bao_cao_thiet_ke.md</code></td><td>Kết quả kiểm tra nguyên tắc.</td></tr>
+    <tr><td><code>ra_soat.json</code></td><td>Ý kiến rà soát của BA (giao diện tự ghi).</td></tr>
+    <tr><td><code>phan_quyen_import.json</code></td><td>Tệp import vào hệ thống phân quyền; chuyển cho SA, dev.</td></tr>
+    <tr><td><code>playground_theo_mang\*.dsl</code>, <code>playground.dsl</code>, <code>playground_chon\*.dsl</code></td><td>Tệp nạp lên playground.</td></tr>
+    <tr><td><code>dac_ta.json</code>, <code>giao_dich.*</code>, <code>trich_xuat\</code></td><td>Tệp trung gian của AI; BA không cần mở.</td></tr>
+  </table></div>
+</section>
+
+<section id="tu-ngu">
+  <h2>Từ ngữ trên playground</h2>
+  <p>Giao diện playground bằng tiếng Anh; mọi tên vai trò, dữ liệu, hành động trong tệp đều là tiếng Việt không dấu.</p>
+  <div class="tbl"><table>
+    <tr><th>Trên màn hình</th><th>Nghĩa</th></tr>
+    <tr><td>Resource</td><td>Loại dữ liệu (tài nguyên), ví dụ <code>truong_mam_non</code>.</td></tr>
+    <tr><td>Resource role</td><td>Vai trò gắn với một đơn vị hoặc bản ghi, có phạm vi (ví dụ trợ lý CTQC ở đơn vị A).</td></tr>
+    <tr><td>Top-level role</td><td>Vai trò áp cho toàn hệ thống; tên có đuôi <code>__quyen_chung</code> là quyền không theo bản ghi (thêm mới, nhập, xuất).</td></tr>
+    <tr><td>Relation</td><td>Quan hệ giữa dữ liệu, ví dụ <code>cap_tren</code>, <code>thuoc_don_vi</code>, <code>thuoc_truong</code>.</td></tr>
+    <tr><td>Role derivation</td><td>Quyền lan theo quan hệ, ví dụ quyền ở đơn vị lan xuống trường thuộc đơn vị.</td></tr>
+    <tr><td>User set, Resource set, ABAC rule</td><td>Quyền theo điều kiện, ví dụ người lập xem được bản ghi do mình lập.</td></tr>
+    <tr><td>Tenant <code>mac_dinh</code></td><td>Không gian dữ liệu mẫu; luôn chọn <code>mac_dinh</code> khi tự hỏi ở thẻ Check.</td></tr>
+    <tr><td>can / cannot</td><td>Được / không được.</td></tr>
+  </table></div>
+</section>
+
+<section id="luu-y">
+  <h2>Lưu ý và xử lý sự cố</h2>
+  <ul>
+    <li><b>Dữ liệu trên playground là dữ liệu mẫu</b> (đơn vị A, B, trường mầm non 1, 2…) do AI dựng để thử, không phải dữ liệu thật.</li>
+    <li><b>Ràng buộc chưa được playground kiểm tra:</b> chỉ duyệt khi đang chờ duyệt, người lập không tự duyệt, bản ghi đã khoá không sửa được. Các ràng buộc này nằm trong thiết kế và tệp import, trên playground chỉ được liệt kê ở chú thích cuối tệp.</li>
+    <li><b>Người lập:</b> quyền «người lập xem bản ghi của mình» so người lập với thuộc tính <code>ma_nguoi_dung</code> của người dùng. Hệ thống thật phải đồng bộ thuộc tính này bằng mã tài khoản.</li>
+  </ul>
+  <div class="tbl"><table>
+    <tr><th>Hiện tượng</th><th>Cách xử lý</th></tr>
+    <tr><td>Gõ <kbd>/</kbd> không thấy lệnh</td><td>Kiểm tra hai thư mục skill nằm ngay trong <code>.claude\skills\</code> (không lồng thêm một cấp), rồi mở lại ứng dụng.</td></tr>
+    <tr><td>Báo không tìm thấy Python</td><td>Cài Python 3.10+ có đánh dấu Add Python to PATH, mở lại ứng dụng.</td></tr>
+    <tr><td>Giao diện rà soát không mở</td><td>Gõ <code>/truc-quan-phan-quyen</code>; AI tự chọn cổng trống và đưa địa chỉ mới.</td></tr>
+    <tr><td>Playground chậm, sơ đồ rối</td><td>Nạp tệp theo mảng, hoặc dùng lệnh <code>dsl</code> với hai loại dữ liệu.</td></tr>
+    <tr><td>Một số câu kiểm thử không đạt</td><td>Chụp màn hình thẻ Tests, gửi vào cửa sổ Claude. Bước xuất tự kiểm trước khi ghi tệp, nên câu không đạt là lỗi của bước xuất và cần sửa.</td></tr>
+  </table></div>
+</section>
+</main>
+</div>
+
+<script>
+document.querySelectorAll('button[data-copy]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.getAttribute('data-copy');
+    var done=function(){b.textContent='Đã chép';setTimeout(function(){b.textContent='Chép'},1500)};
+    try{
+      navigator.clipboard.writeText(t).then(done,function(){sel(b)});
+    }catch(e){sel(b)}
+  });
+});
+function sel(b){var c=b.parentNode.querySelector('code');var r=document.createRange();r.selectNodeContents(c);var s=window.getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Nhấn Ctrl+C'}
+</script>
