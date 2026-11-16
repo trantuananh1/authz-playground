@@ -1,3 +1,4 @@
+import { Database, Workflow } from "lucide-react"
 import { useMemo } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useStore, type GraphTab } from "@/store"
@@ -63,14 +64,24 @@ export function GraphPanel() {
   const dataCount = data.users.length + data.resource_instances.length
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as GraphTab)} className="h-full gap-0 bg-background" data-tour="graph">
-      <TabsList variant="line" className="h-10 w-full shrink-0 justify-start gap-4 rounded-none border-b bg-panel px-4">
-        <TabsTrigger value="policy" className="flex-none px-0 text-[12.5px]">
-          Chính sách <span className="font-mono text-[11px] text-muted-foreground">{policyCount}</span>
-        </TabsTrigger>
-        <TabsTrigger value="data" className="flex-none px-0 text-[12.5px]">
-          Dữ liệu <span className="font-mono text-[11px] text-muted-foreground">{dataCount}</span>
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex h-10 shrink-0 items-center gap-3 border-b bg-panel px-4">
+        <span className="text-[12.5px] font-medium">Đồ thị</span>
+        <TabsList className="h-8 gap-0.5 rounded-md border bg-transparent p-0.5">
+          <TabsTrigger
+            value="policy"
+            className="h-6 flex-none gap-1.5 rounded-sm px-2 text-[11.5px] data-active:bg-accent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-accent"
+          >
+            <Workflow className="size-3.5" /> Chính sách{" "}
+            <span className="font-mono text-[10.5px] text-muted-foreground">{policyCount}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="data"
+            className="h-6 flex-none gap-1.5 rounded-sm px-2 text-[11.5px] data-active:bg-accent data-active:shadow-none dark:data-active:border-transparent dark:data-active:bg-accent"
+          >
+            <Database className="size-3.5" /> Dữ liệu <span className="font-mono text-[10.5px] text-muted-foreground">{dataCount}</span>
+          </TabsTrigger>
+        </TabsList>
+      </div>
       <TabsContent value="policy" className="min-h-0 flex-1">
         <PolicyGraph />
       </TabsContent>
