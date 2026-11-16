@@ -20,8 +20,24 @@ import {
   type NodeProps,
 } from "@xyflow/react"
 import "@xyflow/react/dist/base.css"
-import { Box, Boxes, Building2, ChevronDown, Eye, EyeOff, Filter, KeyRound, Shield, ShieldCheck, User, UsersRound } from "lucide-react"
+import {
+  Box,
+  Boxes,
+  Building2,
+  ChevronDown,
+  Crosshair,
+  Eye,
+  EyeOff,
+  Filter,
+  KeyRound,
+  Shield,
+  ShieldCheck,
+  User,
+  UsersRound,
+  X,
+} from "lucide-react"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { Combo } from "@/components/common"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { useStore } from "@/store"
@@ -334,15 +350,18 @@ interface CanvasProps {
   legend: LegendItem[]
   edgeLegend: EdgeLegendItem[]
   empty: string
+  /** extra switches shown in the legend, above "Show names" */
+  controls?: React.ReactNode
 }
 
-function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
+function Canvas({ id, graph, legend, edgeLegend, empty, controls }: CanvasProps) {
   const theme = useStore((s) => s.theme)
   const flow = useReactFlow()
   const positions = useRef<Positions>(new Map())
   const [hovered, setHovered] = useState<string | null>(null)
   const [showLabels, setShowLabels] = useState(true)
   const [legendOpen, setLegendOpen] = useState(true)
+  const [search, setSearch] = useState("")
   const [hidden, setHidden] = useState<Set<string>>(() => hiddenByGraph.get(id) ?? new Set())
   const toggleHidden = (key: string) =>
     setHidden((prev) => {
@@ -355,13 +374,81 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
     hiddenByGraph.set(id, new Set())
     setHidden(new Set())
   }
-  const isNodeHidden = (g: GNode) => hidden.has(nodeGroup(g))
-  // an edge disappears with its category or with either end
-  const hiddenNodeIds = useMemo(() => new Set(graph.nodes.filter((g) => hidden.has(nodeGroup(g))).map((g) => g.id)), [graph.nodes, hidden])
-  const visibleEdges = useMemo(
-    () => graph.edges.filter((e) => !hidden.has(`edge:${edgeCategory(e)}`) && !hiddenNodeIds.has(e.source) && !hiddenNodeIds.has(e.target)),
-    [graph.edges, hidden, hiddenNodeIds],
+  // focus: one node and its direct neighbours, picked by double-click or search
+  const [focus, setFocus] = useState<string | null>(null)
+  const focusNode = focus ? graph.nodes.find((n) => n.id === focus) : undefined
+
+  const legendHidden = useMemo(() => new Set(graph.nodes.filter((g) => hidden.has(nodeGroup(g))).map((g) => g.id)), [graph.nodes, hidden])
+  const legendEdges = useMemo(
+    () => graph.edges.filter((e) => !hidden.has(`edge:${edgeCategory(e)}`) && !legendHidden.has(e.source) && !legendHidden.has(e.target)),
+    [graph.edges, hidden, legendHidden],
   )
+  const focusSet = useMemo(() => {
+    if (!focusNode) return null
+    const set = new Set([focusNode.id])
+    for (const e of legendEdges) {
+      if (e.source === focusNode.id) set.add(e.target)
+      if (e.target === focusNode.id) set.add(e.source)
+    }
+    return set
+  }, [focusNode, legendEdges])
+  // an edge disappears with its category or with either end
+  const hiddenNodeIds = useMemo(
+    () => (focusSet ? new Set(graph.nodes.filter((g) => legendHidden.has(g.id) || !focusSet.has(g.id)).map((g) => g.id)) : legendHidden),
+    [graph.nodes, legendHidden, focusSet],
+  )
+  // in focus, only the focused node's own edges: links between its neighbours are what made the view unreadable
+  const visibleEdges = useMemo(
+    () => (focusNode ? legendEdges.filter((e) => e.source === focusNode.id || e.target === focusNode.id) : legendEdges),
+    [legendEdges, focusNode],
+  )
+  /** Focus layout: neighbours on a ring around the focused node, grouped by kind. Stored positions stay untouched. */
+  const focusPositions = useMemo(() => {
+    if (!focusNode || !focusSet) return null
+    const centre = positions.current.get(focusNode.id) ?? { x: 0, y: 0 }
+    const order: NodeKind[] = ["resource", "resource-role", "role", "userset", "resourceset", "user", "tenant", "instance"]
+    const ring = graph.nodes
+      .filter((g) => g.id !== focusNode.id && focusSet.has(g.id))
+      .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.title.localeCompare(b.title))
+    const radius = Math.max(170, (ring.length * 64) / (2 * Math.PI))
+    const out = new Map<string, { x: number; y: number }>([[focusNode.id, centre]])
+    ring.forEach((g, i) => {
+      const a = (i / ring.length) * 2 * Math.PI - Math.PI / 2
+      out.set(g.id, { x: centre.x + Math.cos(a) * radius, y: centre.y + Math.sin(a) * radius })
+    })
+    return out
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNode, focusSet, graph.nodes])
+  const isNodeHidden = (g: GNode) => hiddenNodeIds.has(g.id)
+  const searchOptions = useMemo(
+    () => graph.nodes.filter((g) => !legendHidden.has(g.id)).map((g) => ({ value: g.title, hint: KIND_LABEL[g.kind], id: g.id })),
+    [graph.nodes, legendHidden],
+  )
+  useEffect(() => {
+    if (!focus) setSearch("")
+  }, [focus])
+
+  // leaving focus mode: Esc, unless the editor or a field has the keyboard
+  useEffect(() => {
+    if (!focus) return
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (e.key === "Escape" && !t.closest?.(".cm-editor, input, textarea")) setFocus(null)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [focus])
+  useEffect(() => {
+    if (focus && !focusNode) setFocus(null)
+  }, [focus, focusNode])
+  // frame what is left after entering or leaving focus
+  useEffect(() => {
+    const raf = requestAnimationFrame(() =>
+      flow.fitView({ ...FIT, nodes: focusSet ? [...focusSet].map((id) => ({ id })) : undefined, duration: 300 }),
+    )
+    return () => cancelAnimationFrame(raf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus])
   const legendRef = useRef<HTMLDivElement>(null)
   const [nodes, setNodes, onNodesChange] = useNodesState<CircleNode>([])
 
@@ -405,7 +492,9 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
               .map((e) => ({ source: e.source, target: e.target, distance: e.distance, strength: e.strength })),
             positions.current,
           )
-    const first = positions.current.size === 0
+    // a new file or store: most nodes were never placed, so treat it like a first layout
+    const known = graph.nodes.filter((n) => positions.current.has(n.id)).length
+    const first = positions.current.size === 0 || known < graph.nodes.length * 0.5
     // spread the first layout to the panel's proportions; circles keep their size
     if (first && box.current && next.size > 1) {
       const xs = [...next.values()].map((p) => p.x)
@@ -445,14 +534,18 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
 
   const viewNodes = useMemo(
     () =>
-      nodes.map((n) => ({
-        ...n,
-        hidden: isNodeHidden(n.data.g),
-        zIndex: n.id === hovered ? 1000 : 1,
-        data: { ...n.data, hovered: n.id === hovered, dim: !!neighbours && !neighbours.has(n.id), showLabel: showLabels },
-      })),
+      nodes.map((n) => {
+        const p = focusPositions?.get(n.id)
+        return {
+          ...n,
+          ...(p ? { position: { x: p.x - n.data.g.r, y: p.y - n.data.g.r } } : {}),
+          hidden: isNodeHidden(n.data.g),
+          zIndex: n.id === hovered ? 1000 : 1,
+          data: { ...n.data, hovered: n.id === hovered, dim: !!neighbours && !neighbours.has(n.id), showLabel: showLabels },
+        }
+      }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [nodes, hovered, neighbours, showLabels, hidden],
+    [nodes, hovered, neighbours, showLabels, hiddenNodeIds, focusPositions],
   )
 
   const edges = useMemo<LineEdge[]>(() => {
@@ -480,6 +573,7 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
 
   // keep dragged positions so the next layout starts from them
   const onNodeDragStop = (_: unknown, node: Node) => {
+    if (focusPositions) return
     const g = graph.nodes.find((n) => n.id === node.id)
     if (g) positions.current.set(node.id, { x: node.position.x + g.r, y: node.position.y + g.r })
   }
@@ -502,7 +596,7 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
     )
 
   return (
-    <div ref={box} className="relative h-full w-full">
+    <div ref={box} tabIndex={-1} className="relative h-full w-full outline-none">
       <ReactFlow
         nodes={viewNodes}
         edges={edges}
@@ -513,6 +607,12 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
         onNodeMouseLeave={() => setHovered(null)}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={(_, n) => {
+          // take the keyboard from the editor so Esc leaves focus mode
+          box.current?.focus({ preventScroll: true })
+          setFocus((f) => (f === n.id ? null : n.id))
+        }}
+        zoomOnDoubleClick={false}
         colorMode={theme}
         minZoom={0.2}
         maxZoom={2.5}
@@ -600,6 +700,7 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
                 <Eye className="size-3" /> Show all ({hidden.size} hidden)
               </button>
             )}
+            {controls}
             <label className="mt-0.5 flex cursor-pointer items-center gap-1 border-t pt-1.5 text-[10.5px] text-muted-foreground">
               <Switch checked={showLabels} onCheckedChange={setShowLabels} className="origin-left scale-[0.6]" />
               Show names
@@ -607,8 +708,39 @@ function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
           </>
         )}
       </div>
+      <div className="absolute top-2 right-2 w-56">
+        <Combo
+          value={search}
+          onChange={(v) => {
+            setSearch(v)
+            const hit = searchOptions.find((o) => o.value === v)
+            if (hit) setFocus(hit.id)
+          }}
+          options={searchOptions}
+          placeholder="Find a node…"
+          id={`graph-search-${id}`}
+          className="[&_input]:bg-panel/90 [&_input]:backdrop-blur"
+        />
+      </div>
+
+      {focusNode && (
+        <div className="absolute top-12 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-panel/95 py-1 pr-1 pl-3 text-[11.5px] shadow-sm backdrop-blur">
+          <Crosshair className="size-3.5 text-brand" />
+          <span className="text-muted-foreground">Focused on</span>
+          <span className="font-mono font-medium">{focusNode.title}</span>
+          <span className="text-muted-foreground">· {(focusSet?.size ?? 1) - 1} connected</span>
+          <button
+            type="button"
+            onClick={() => setFocus(null)}
+            className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[11px] transition-colors hover:bg-foreground/15"
+          >
+            <X className="size-3" /> Show all <kbd className="font-sans text-muted-foreground">Esc</kbd>
+          </button>
+        </div>
+      )}
+
       <div className="pointer-events-none absolute bottom-3 left-3 text-[11px] text-muted-foreground/80">
-        Hover a node for its details · click to open its definition · drag to rearrange
+        Hover for details · click to open the definition · double-click to focus · drag to rearrange
       </div>
     </div>
   )

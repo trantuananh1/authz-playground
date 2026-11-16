@@ -502,6 +502,11 @@ assert bob cannot delete document:d1
             Mục đang ẩn bị mờ và có biểu tượng con mắt gạch chéo; bấm <B>Show all</B> để hiện lại tất cả. Vị trí các nút không đổi khi ẩn
             hiện.
           </li>
+          <li>
+            <B>Đồ thị lớn:</B> <B>double-click</B> một nút (hoặc gõ tên vào ô <B>Find a node</B> ở góc phải) để chỉ xem nút đó và các nút
+            nối trực tiếp, xếp thành vòng quanh nó; bấm <B>Show all</B> hoặc <K>Esc</K> để quay lại. Khi mô hình có nhiều resource role,
+            công tắc <B>Collapse roles</B> (tự bật khi có trên 40 role) gộp các role vào resource của chúng để đồ thị gọn hơn.
+          </li>
         </Bullets>
         <P>
           Tab <B>Data</B> của khung Graph vẽ người dùng, tài nguyên (mỗi loại một màu) và tenant, cùng các cạnh gán role, quan hệ và tài

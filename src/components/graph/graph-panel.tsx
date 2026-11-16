@@ -1,5 +1,6 @@
 import { Database, Workflow } from "lucide-react"
-import { useMemo } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
+import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useStore, type GraphTab } from "@/store"
 import { dataGraph, policyGraph, typeColor } from "./build"
@@ -28,12 +29,27 @@ const DATA_EDGES: EdgeLegendItem[] = [
   { category: "membership", label: "Belongs to tenant", color: "var(--muted-foreground)", dashed: true },
 ]
 
+// the graphs follow the editor a beat behind, so typing stays smooth on large policies
+/** Beyond this many resource roles the policy graph starts with roles folded into their resources. */
+const COLLAPSE_ABOVE = 40
+
 function PolicyGraph() {
-  const schema = useStore((s) => s.file.schema)
-  const graph = useMemo(() => policyGraph(schema), [schema])
+  const schema = useDeferredValue(useStore((s) => s.file.schema))
+  const roleCount = schema.resources.reduce((n, r) => n + Object.keys(r.roles ?? {}).length, 0)
+  const [collapse, setCollapse] = useState<boolean | null>(null)
+  const collapseRoles = collapse ?? roleCount > COLLAPSE_ABOVE
+  const graph = useMemo(() => policyGraph(schema, { collapseRoles }), [schema, collapseRoles])
   return (
     <GraphCanvas
       id="policy"
+      controls={
+        roleCount > 0 && (
+          <label className="mt-0.5 flex cursor-pointer items-center gap-1 border-t pt-1.5 text-[10.5px] text-muted-foreground">
+            <Switch checked={collapseRoles} onCheckedChange={setCollapse} className="origin-left scale-[0.6]" />
+            Collapse roles ({roleCount})
+          </label>
+        )
+      }
       graph={graph}
       legend={POLICY_LEGEND}
       edgeLegend={POLICY_EDGES}
@@ -43,7 +59,7 @@ function PolicyGraph() {
 }
 
 function DataGraph() {
-  const file = useStore((s) => s.file)
+  const file = useDeferredValue(useStore((s) => s.file))
   const graph = useMemo(() => dataGraph(file), [file])
   const legend = useMemo<LegendItem[]>(() => {
     const types = [...new Set(graph.nodes.filter((n) => n.kind === "instance").map((n) => n.title.split(":")[0]))]

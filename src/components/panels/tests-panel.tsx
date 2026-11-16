@@ -1,21 +1,34 @@
 import { CircleCheck, CircleX, Plus, Trash2 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import { Combo, FieldLabel, KindBadge, ModEnterHint, Sentence, submitOnModEnter, useRefOptions } from "@/components/common"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Engine, splitRef } from "@/lib/policy"
+import { Engine, splitRef, type CheckResult, type PolicyFile, type Test } from "@/lib/policy"
 import { cn } from "@/lib/utils"
 import { useStore } from "@/store"
 
-export function useTestResults() {
-  const file = useStore((s) => s.file)
-  return useMemo(() => {
+type TestRun = { test: Test; result: CheckResult; pass: boolean }
+
+/** One run per version of the file, shared by the tab badge and the list. */
+const runs = new WeakMap<PolicyFile, TestRun[]>()
+
+function runTests(file: PolicyFile): TestRun[] {
+  let out = runs.get(file)
+  if (!out) {
     const engine = new Engine(file)
-    return file.tests.map((t) => {
+    out = file.tests.map((t) => {
       const r = engine.check(t)
       return { test: t, result: r, pass: r.allowed === t.expected && !r.errors.some((e) => e.startsWith("Unknown")) }
     })
-  }, [file])
+    runs.set(file, out)
+  }
+  return out
+}
+
+/** Deferred, so typing in the editor is not held up by re-running a large suite. */
+export function useTestResults() {
+  const file = useDeferredValue(useStore((s) => s.file))
+  return useMemo(() => runTests(file), [file])
 }
 
 function AddTest() {
@@ -79,6 +92,12 @@ function AddTest() {
 
 export function TestsPanel() {
   const results = useTestResults()
+  const [onlyFailing, setOnlyFailing] = useState(false)
+  const [query, setQuery] = useState("")
+  const q = query.trim().toLowerCase()
+  const shown = results
+    .map((r, index) => ({ ...r, index }))
+    .filter((r) => (!onlyFailing || !r.pass) && (!q || `${r.test.user} ${r.test.action} ${r.test.resource}`.toLowerCase().includes(q)))
   const mutate = useStore((s) => s.mutate)
   const runCheck = useStore((s) => s.runCheck)
   const passed = results.filter((r) => r.pass).length
@@ -102,9 +121,36 @@ export function TestsPanel() {
         </div>
       </div>
       <AddTest />
+      {results.length > 20 && (
+        <div className="flex items-center gap-2 border-b px-4 py-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by user, action or resource"
+            aria-label="Filter tests"
+            className="h-7 flex-1 rounded-md border border-input bg-transparent px-2.5 font-mono text-[12px] outline-none placeholder:text-muted-foreground/70 focus-visible:border-ring"
+          />
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={onlyFailing ? "failing" : "all"}
+            onValueChange={(v) => v && setOnlyFailing(v === "failing")}
+          >
+            <ToggleGroupItem value="all" className="h-7 px-2.5 text-[12px]">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="failing" className="h-7 px-2.5 text-[12px] data-[state=on]:text-deny">
+              Failing {results.length - passed}
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <span className="w-16 text-right font-mono text-[11px] text-muted-foreground">{shown.length}</span>
+        </div>
+      )}
       <ul>
-        {results.map(({ test, result, pass }, i) => (
-          <li key={i} className="group border-b last:border-0">
+        {shown.map(({ test, result, pass, index: i }) => (
+          // the browser skips layout and paint for rows scrolled out of view
+          <li key={i} className="group border-b [contain-intrinsic-size:auto_45px] [content-visibility:auto] last:border-0">
             <div className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-accent/50">
               <button
                 type="button"

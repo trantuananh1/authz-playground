@@ -1,5 +1,5 @@
 import { evaluate, type ConditionCheck, type EvalContext } from "./conditions"
-import type { Attributes, PolicyFile, Resource, ResourceInstance, User } from "./types"
+import type { Attributes, PolicyFile, Resource, ResourceInstance, Role, User } from "./types"
 
 export interface CheckInput {
   user: string
@@ -41,12 +41,32 @@ export class Engine {
   private resources: Map<string, Resource>
   private users: Map<string, User>
   private instances: Map<string, ResourceInstance>
+  private topRoles: Map<string, Role>
+  /** `object \0 relation` -> subjects */
+  private tuplesTo = new Map<string, string[]>()
+  /** `user \0 instance` -> roles assigned directly on it */
+  private directRoles = new Map<string, string[]>()
+  /** `user \0 instance` -> roles held, once fully worked out */
+  private roleMemo = new Map<string, Map<string, string[]>>()
+  /** instances on the current derivation path, to stop at cycles */
+  private onPath = new Set<string>()
 
   constructor(file: PolicyFile) {
     this.file = file
     this.resources = new Map(file.schema.resources.map((r) => [r.key, r]))
     this.users = new Map(file.data.users.map((u) => [u.key, u]))
     this.instances = new Map(file.data.resource_instances.map((i) => [`${i.resource}:${i.key}`, i]))
+    this.topRoles = new Map(file.schema.roles.map((r) => [r.key, r]))
+    for (const t of file.data.relationship_tuples) {
+      const k = `${t.object}\u0000${t.relation}`
+      this.tuplesTo.set(k, [...(this.tuplesTo.get(k) ?? []), t.subject])
+    }
+    for (const u of file.data.users)
+      for (const a of u.roles ?? [])
+        if (a.resource_instance) {
+          const k = `${u.key}\u0000${a.resource_instance}`
+          this.directRoles.set(k, [...(this.directRoles.get(k) ?? []), a.role])
+        }
   }
 
   private resourceRoleClosure(res: Resource, start: string): Map<string, string[]> {
@@ -64,34 +84,48 @@ export class Engine {
    * Roles a user holds on one resource instance: direct assignments plus roles
    * derived through relationship tuples (Permit "role derivation").
    */
-  rolesOnInstance(userKey: string, ref: string, visiting = new Set<string>()): Map<string, string[]> {
-    const out = new Map<string, string[]>()
-    if (visiting.has(ref)) return out
-    const nextVisiting = new Set(visiting).add(ref)
-    const [type] = ref.split(":")
-    const user = this.users.get(userKey)
+  rolesOnInstance(userKey: string, ref: string): Map<string, string[]> {
+    return this.rolesOn(userKey, ref).roles
+  }
 
-    for (const a of user?.roles ?? [])
-      if (a.resource_instance === ref && !out.has(a.role)) out.set(a.role, [`${userKey} is assigned ${type}#${a.role} on ${ref}`])
+  /**
+   * Memoised per (user, instance). A result that stopped at a cycle may miss roles
+   * reachable another way, so it is returned but not remembered.
+   */
+  private rolesOn(userKey: string, ref: string): { roles: Map<string, string[]>; complete: boolean } {
+    const key = `${userKey}\u0000${ref}`
+    const known = this.roleMemo.get(key)
+    if (known) return { roles: known, complete: true }
+    if (this.onPath.has(key)) return { roles: new Map(), complete: false }
+    this.onPath.add(key)
+
+    const out = new Map<string, string[]>()
+    let complete = true
+    const [type] = ref.split(":")
+    for (const role of this.directRoles.get(key) ?? [])
+      if (!out.has(role)) out.set(role, [`${userKey} is assigned ${type}#${role} on ${ref}`])
 
     const res = this.resources.get(type)
     for (const [roleKey, role] of Object.entries(res?.roles ?? {})) {
       if (out.has(roleKey)) continue
       for (const d of role.granted_to?.users_with_role ?? []) {
-        const tuples = this.file.data.relationship_tuples.filter(
-          (t) => t.object === ref && t.relation === d.linked_by_relation && t.subject.startsWith(`${d.on_resource}:`),
-        )
-        for (const t of tuples) {
-          const via = this.rolesOnInstance(userKey, t.subject, nextVisiting).get(d.role)
+        for (const subject of this.tuplesTo.get(`${ref}\u0000${d.linked_by_relation}`) ?? []) {
+          if (!subject.startsWith(`${d.on_resource}:`)) continue
+          const sub = this.rolesOn(userKey, subject)
+          complete &&= sub.complete
+          const via = sub.roles.get(d.role)
           if (via) {
-            out.set(roleKey, [...via, `${t.subject} is ${t.relation} of ${ref}`, `${d.on_resource}#${d.role} derives ${type}#${roleKey}`])
+            out.set(roleKey, [...via, `${subject} is ${d.linked_by_relation} of ${ref}`, `${d.on_resource}#${d.role} derives ${type}#${roleKey}`])
             break
           }
         }
         if (out.has(roleKey)) break
       }
     }
-    return out
+
+    this.onPath.delete(key)
+    if (complete) this.roleMemo.set(key, out)
+    return { roles: out, complete }
   }
 
   check(input: CheckInput): CheckResult {
@@ -122,7 +156,7 @@ export class Engine {
     // RBAC: top-level roles assigned in the resource's tenant
     const tenantRoles = (user?.roles ?? []).filter((a) => !a.resource_instance && (a.tenant ?? DEFAULT_TENANT) === tenant)
     for (const a of tenantRoles) {
-      const role = this.file.schema.roles.find((r) => r.key === a.role)
+      const role = this.topRoles.get(a.role)
       const hit = role?.permissions.find((p) => p === permission || p === `${type}:*`)
       if (hit)
         grants.push({

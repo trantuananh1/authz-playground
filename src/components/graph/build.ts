@@ -63,7 +63,11 @@ export function typeColor(schema: Schema, type: string) {
   return TYPE_COLORS[(i < 0 ? schema.resources.length : i) % TYPE_COLORS.length]
 }
 
-export function policyGraph(schema: Schema): Graph {
+/**
+ * @param collapseRoles draw each resource's roles inside the resource node and
+ * merge role derivations into one edge per pair of resources; large models stay legible
+ */
+export function policyGraph(schema: Schema, { collapseRoles = false } = {}): Graph {
   const nodes: GNode[] = []
   const edges: GEdge[] = []
   const resources = new Set(schema.resources.map((r) => r.key))
@@ -81,10 +85,14 @@ export function policyGraph(schema: Schema): Graph {
         ["actions", list(Object.keys(r.actions))],
         ...Object.entries(r.attributes ?? {}).map(([k, a]): [string, string] => [`attr ${k}`, a.type]),
         ...Object.entries(r.relations ?? {}).map(([k, to]): [string, string] => [`rel ${k}`, to + (to === r.key ? " (self)" : "")]),
+        ...(collapseRoles && Object.keys(r.roles ?? {}).length
+          ? [[`roles (${Object.keys(r.roles!).length})`, Object.keys(r.roles!).join(", ")] as [string, string]]
+          : []),
       ],
       locate: `resource:${r.key}`,
       jsonNeedle: r.key,
     })
+    if (collapseRoles) continue
     for (const [roleKey, role] of Object.entries(r.roles ?? {})) {
       const id = `rrole:${r.key}:${roleKey}`
       const derived = (role.granted_to?.users_with_role ?? []).map((d) => `${d.on_resource}#${d.role} via ${d.linked_by_relation}`)
@@ -131,6 +139,32 @@ export function policyGraph(schema: Schema): Graph {
             distance: 160,
             strength: 0.05,
           })
+    }
+  }
+
+  if (collapseRoles) {
+    // one edge per (from resource, to resource), listing the roles it carries
+    const merged = new Map<string, string[]>()
+    for (const r of schema.resources)
+      for (const [roleKey, role] of Object.entries(r.roles ?? {}))
+        for (const d of role.granted_to?.users_with_role ?? []) {
+          if (d.on_resource === r.key || !resources.has(d.on_resource)) continue
+          const k = `${d.on_resource}\u0000${r.key}`
+          merged.set(k, [...(merged.get(k) ?? []), `${d.role} → ${roleKey}`])
+        }
+    for (const [k, pairs] of merged) {
+      const [from, to] = k.split("\u0000")
+      edges.push({
+        id: `derive:${from}:${to}`,
+        source: `resource:${from}`,
+        target: `resource:${to}`,
+        label: pairs.length === 1 ? pairs[0] : `${pairs.length} role derivations`,
+        color: "var(--rebac)",
+        dashed: true,
+        arrow: true,
+        distance: 170,
+        strength: 0.2,
+      })
     }
   }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useDeferredValue, useMemo, useState } from "react"
 import { Combo, FieldLabel, KindBadge, Mono } from "@/components/common"
 import { Engine, type GrantKind } from "@/lib/policy"
 import { cn } from "@/lib/utils"
@@ -7,7 +7,7 @@ import { useStore } from "@/store"
 const DOT: Record<GrantKind, string> = { rbac: "bg-rbac", rebac: "bg-rebac", abac: "bg-abac" }
 
 export function MatrixPanel() {
-  const file = useStore((s) => s.file)
+  const file = useDeferredValue(useStore((s) => s.file))
   const runCheck = useStore((s) => s.runCheck)
   const checkUser = useStore((s) => s.check.user)
   const [user, setUser] = useState(checkUser || file.data.users[0]?.key || "")

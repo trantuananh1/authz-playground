@@ -175,3 +175,27 @@ permit pros to doc: read
     expect(JSON.parse(out).condition_set_rules).toEqual([{ user_set: "pros", permission: "doc:edit", resource_set: "doc" }])
   })
 })
+
+describe("engine on cyclic relationships", () => {
+  const src = `resource folder {
+  actions read
+  relations { parent: folder }
+  role viewer: read
+  derive viewer from folder#viewer via parent
+}
+assign ann viewer on folder:a
+relate folder:a parent folder:b
+relate folder:b parent folder:c
+relate folder:c parent folder:b
+assert ann can read folder:c
+assert ann can read folder:b
+assert bob cannot read folder:c
+`
+  it("terminates and still finds roles through the cycle, in any order", () => {
+    const file = compile(src, "dsl").file!
+    for (const order of [file.tests, [...file.tests].reverse()]) {
+      const engine = new Engine(file)
+      for (const t of order) expect(engine.check(t).allowed).toBe(t.expected)
+    }
+  })
+})
