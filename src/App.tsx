@@ -51,13 +51,14 @@ function EditorHeader() {
   const warnings = diagnostics.length - errors
   return (
     <div className="flex h-10 shrink-0 items-center gap-2 border-b bg-panel px-4">
+      <span className="mr-1 text-[12.5px] font-medium">Policy</span>
       <ToggleGroup
         type="single"
         size="sm"
         value={view}
         onValueChange={(v) => v && setView(v as EditorView)}
         aria-label="Policy view"
-        className="mr-1 rounded-md border p-0.5"
+        className="mr-1 h-8 rounded-md border p-0.5"
       >
         <ToggleGroupItem value="text" className="h-6 gap-1 px-2 text-[11.5px] data-[state=on]:bg-accent">
           <FileCode2 className="size-3.5" /> Text
@@ -66,7 +67,6 @@ function EditorHeader() {
           <Grid3x3 className="size-3.5" /> Matrix
         </ToggleGroupItem>
       </ToggleGroup>
-      <span className="text-[12.5px] font-medium">Policy</span>
       <span className="font-mono text-[11.5px] text-muted-foreground">{fileName}</span>
       <span className="rounded-sm bg-muted px-1.5 font-mono text-[10.5px] text-muted-foreground uppercase">{format}</span>
       <div className="ml-auto flex items-center gap-1.5 text-[12px]">
