@@ -133,7 +133,7 @@ const TOC = [
   ["tests", "Ca kiểm thử (Tests)"],
   ["data", "Dữ liệu (Data)"],
   ["user-matrix", "Ma trận quyền theo người dùng"],
-  ["do-thi", "Đồ thị"],
+  ["do-thi", "Đồ thị (Graph)"],
   ["luu-chia-se", "Lưu, nhập, xuất, chia sẻ"],
   ["cach-tinh", "Cách playground quyết định"],
   ["phim-tat", "Phím tắt"],
@@ -179,7 +179,7 @@ function Content() {
             tên tab cho biết số lượng: Tests màu xanh là tất cả đều đạt, màu đỏ là số ca đang trượt.
           </Step>
           <Step>
-            <B>Đồ thị.</B> Hai tab <B>Chính sách</B> (mô hình) và <B>Dữ liệu</B> (người dùng, tài nguyên và quan hệ giữa chúng).
+            <B>Graph (đồ thị).</B> Hai tab <B>Policy</B> (mô hình) và <B>Data</B> (người dùng, tài nguyên và quan hệ giữa chúng).
           </Step>
         </Steps>
         <P>
@@ -476,11 +476,11 @@ assert bob cannot delete document:d1
         </Callout>
       </Section>
 
-      <Section id="do-thi" title="Đồ thị">
+      <Section id="do-thi" title="Đồ thị (Graph)">
         <P>
-          Tab <B>Chính sách</B> vẽ mô hình: resource (tròn lớn), role của resource (tròn nhỏ quanh nó), role cấp tenant, user set và
-          resource set. Các cạnh thể hiện relation, role derivation, quyền của role và quy tắc ABAC. Bảng <B>Legend</B> ở góc trái giải
-          thích từng biểu tượng và từng kiểu nét.
+          Tab <B>Policy</B> của khung Graph vẽ mô hình: resource (tròn lớn), role của resource (tròn nhỏ quanh nó), role cấp tenant, user
+          set và resource set. Các cạnh thể hiện relation, role derivation, quyền của role và quy tắc ABAC. Bảng <B>Legend</B> ở góc trái
+          giải thích từng biểu tượng và từng kiểu nét.
         </P>
         <Shot name="graph-policy" alt="Đồ thị chính sách khi di chuột vào một user set" />
         <Bullets>
@@ -499,8 +499,8 @@ assert bob cannot delete document:d1
           </li>
         </Bullets>
         <P>
-          Tab <B>Dữ liệu</B> vẽ người dùng, tài nguyên (mỗi loại một màu) và tenant, cùng các cạnh gán role, quan hệ và tài nguyên thuộc
-          tenant nào.
+          Tab <B>Data</B> của khung Graph vẽ người dùng, tài nguyên (mỗi loại một màu) và tenant, cùng các cạnh gán role, quan hệ và tài
+          nguyên thuộc tenant nào.
         </P>
         <Shot name="graph-data" alt="Đồ thị dữ liệu khi di chuột vào một người dùng" />
       </Section>

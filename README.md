@@ -41,8 +41,8 @@ every construct in both forms.
   - **Matrix**: every action on every instance for one user, coloured by the model that granted it.
   - **Problems** and **Syntax** (DSL ↔ JSON reference).
 - **Right — graph**, full height, two tabs:
-  - **Chính sách** (policy): resources, their roles, top-level roles, user sets and resource sets; edges for relations, derivations, grants and rules.
-  - **Dữ liệu** (data): users, resource instances (one colour per type) and tenants; edges for role assignments, relationship tuples and tenant membership.
+  - **Policy**: resources, their roles, top-level roles, user sets and resource sets; edges for relations, derivations, grants and rules.
+  - **Data**: users, resource instances (one colour per type) and tenants; edges for role assignments, relationship tuples and tenant membership.
 
   Nodes are circles laid out by a force simulation. Hovering a node shows its name and attributes and dims everything not connected to it; clicking jumps to its definition; nodes can be dragged. "Show names" labels every node.
 

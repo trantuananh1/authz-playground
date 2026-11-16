@@ -25,6 +25,7 @@ snap() {
 shot() { snap "$1" "$OUT/$2.png" && echo "ok $2" || echo "FAIL $2"; }
 full() { snap "$OUT/$1.png" && echo "ok $1" || echo "FAIL $1"; }
 tab()  { $AB eval "[...document.querySelectorAll('[role=tab]')].find(t=>t.innerText.trim().startsWith('$1'))?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true})); document.activeElement?.blur(); 1" >/dev/null; $AB wait 400 >/dev/null; }
+graphtab() { $AB eval "[...document.querySelectorAll('[data-tour=graph] [role=tab]')].find(t=>t.innerText.trim().startsWith('$1'))?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true})); document.activeElement?.blur(); 1" >/dev/null; $AB wait 400 >/dev/null; }
 radio(){ $AB eval "[...document.querySelectorAll('[role=radio]')].find(t=>t.innerText.trim()==='$1')?.click(); 1" >/dev/null; $AB wait 500 >/dev/null; }
 setcheck() { # user action resource
   $AB eval "(()=>{const set=(id,v)=>{const el=document.querySelector(id); el.focus(); const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value'); d.set.call(el,v); el.dispatchEvent(new Event('input',{bubbles:true})); el.blur()}; set('#q-user','$1'); set('#q-action','$2'); set('#q-resource','$3'); return 1})()" >/dev/null
@@ -49,7 +50,7 @@ $AB eval '[...document.querySelectorAll("header button")].find(b=>b.innerText.in
 full _export-menu; $AB press Escape >/dev/null
 $AB hover '.react-flow__node[data-id="set:beta_testers"]' >/dev/null; $AB wait 500 >/dev/null
 shot '[data-tour=graph]' graph-policy
-tab "Dữ liệu"; $AB wait 1500 >/dev/null
+graphtab "Data"; $AB wait 1500 >/dev/null
 $AB hover '.react-flow__node[data-id="user:beth"]' >/dev/null; $AB wait 500 >/dev/null
 shot '[data-tour=graph]' graph-data
 
