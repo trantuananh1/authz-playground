@@ -362,6 +362,7 @@ function Canvas({ id, graph, legend, edgeLegend, empty, controls }: CanvasProps)
   const [showLabels, setShowLabels] = useState(true)
   const [legendOpen, setLegendOpen] = useState(true)
   const [search, setSearch] = useState("")
+  const [dragging, setDragging] = useState(false)
   const [hidden, setHidden] = useState<Set<string>>(() => hiddenByGraph.get(id) ?? new Set())
   const toggleHidden = (key: string) =>
     setHidden((prev) => {
@@ -532,17 +533,28 @@ function Canvas({ id, graph, legend, edgeLegend, empty, controls }: CanvasProps)
     return set
   }, [hovered, visibleEdges])
 
+  // Keep each view node's identity while nothing about it changed. While dragging, only the
+  // dragged node is new, so React Flow re-renders that node and its edges, not the whole graph.
+  const viewCache = useRef(new WeakMap<CircleNode, { key: string; view: CircleNode }>())
   const viewNodes = useMemo(
     () =>
       nodes.map((n) => {
         const p = focusPositions?.get(n.id)
-        return {
+        const isHovered = n.id === hovered
+        const dim = !!neighbours && !neighbours.has(n.id)
+        const hide = isNodeHidden(n.data.g)
+        const key = `${isHovered}|${dim}|${hide}|${showLabels}|${p ? `${p.x},${p.y}` : ""}`
+        const cached = viewCache.current.get(n)
+        if (cached?.key === key) return cached.view
+        const view: CircleNode = {
           ...n,
           ...(p ? { position: { x: p.x - n.data.g.r, y: p.y - n.data.g.r } } : {}),
-          hidden: isNodeHidden(n.data.g),
-          zIndex: n.id === hovered ? 1000 : 1,
-          data: { ...n.data, hovered: n.id === hovered, dim: !!neighbours && !neighbours.has(n.id), showLabel: showLabels },
+          hidden: hide,
+          zIndex: isHovered ? 1000 : 1,
+          data: { ...n.data, hovered: isHovered, dim, showLabel: showLabels },
         }
+        viewCache.current.set(n, { key, view })
+        return view
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [nodes, hovered, neighbours, showLabels, hiddenNodeIds, focusPositions],
@@ -605,7 +617,12 @@ function Canvas({ id, graph, legend, edgeLegend, empty, controls }: CanvasProps)
         onNodesChange={onNodesChange}
         onNodeMouseEnter={(_, n) => setHovered(n.id)}
         onNodeMouseLeave={() => setHovered(null)}
-        onNodeDragStop={onNodeDragStop}
+        onNodeDragStart={() => setDragging(true)}
+        onNodeDragStop={(e, n) => {
+          setDragging(false)
+          onNodeDragStop(e, n)
+        }}
+        onlyRenderVisibleElements
         onNodeClick={onNodeClick}
         onNodeDoubleClick={(_, n) => {
           // take the keyboard from the editor so Esc leaves focus mode
@@ -621,7 +638,8 @@ function Canvas({ id, graph, legend, edgeLegend, empty, controls }: CanvasProps)
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showInteractive={false} position="bottom-right" fitViewOptions={FIT} />
       </ReactFlow>
-      {hovered && !hiddenNodeIds.has(hovered) && (
+      {/* placing the card costs a scan of the whole graph, so it waits until the drag ends */}
+      {hovered && !dragging && !hiddenNodeIds.has(hovered) && (
         <SmartTooltip
           hovered={hovered}
           nodes={nodes.filter((n) => !hiddenNodeIds.has(n.id))}
