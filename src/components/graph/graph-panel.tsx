@@ -14,24 +14,32 @@ const POLICY_LEGEND: LegendItem[] = [
 ]
 
 const POLICY_EDGES: EdgeLegendItem[] = [
-  { label: "Relation", color: "var(--muted-foreground)" },
-  { label: "Role derivation", color: "var(--rebac)", dashed: true },
-  { label: "Role grants actions", color: "var(--rbac)" },
-  { label: "ABAC rule", color: "var(--abac)" },
-  { label: "Resource set filters", color: "var(--abac)", dashed: true },
+  { category: "relation", label: "Relation", color: "var(--muted-foreground)" },
+  { category: "derivation", label: "Role derivation", color: "var(--rebac)", dashed: true },
+  { category: "grant", label: "Role grants actions", color: "var(--rbac)" },
+  { category: "rule", label: "ABAC rule", color: "var(--abac)" },
+  { category: "filter", label: "Resource set filters", color: "var(--abac)", dashed: true },
 ]
 
 const DATA_EDGES: EdgeLegendItem[] = [
-  { label: "Role on instance", color: "var(--rebac)" },
-  { label: "Role in tenant", color: "var(--rbac)" },
-  { label: "Relationship", color: "var(--foreground)" },
-  { label: "Belongs to tenant", color: "var(--muted-foreground)", dashed: true },
+  { category: "assign-instance", label: "Role on instance", color: "var(--rebac)" },
+  { category: "assign-tenant", label: "Role in tenant", color: "var(--rbac)" },
+  { category: "tuple", label: "Relationship", color: "var(--foreground)" },
+  { category: "membership", label: "Belongs to tenant", color: "var(--muted-foreground)", dashed: true },
 ]
 
 function PolicyGraph() {
   const schema = useStore((s) => s.file.schema)
   const graph = useMemo(() => policyGraph(schema), [schema])
-  return <GraphCanvas graph={graph} legend={POLICY_LEGEND} edgeLegend={POLICY_EDGES} empty="Declare a resource to see the policy graph" />
+  return (
+    <GraphCanvas
+      id="policy"
+      graph={graph}
+      legend={POLICY_LEGEND}
+      edgeLegend={POLICY_EDGES}
+      empty="Declare a resource to see the policy graph"
+    />
+  )
 }
 
 function DataGraph() {
@@ -47,6 +55,7 @@ function DataGraph() {
   }, [graph, file.schema])
   return (
     <GraphCanvas
+      id="data"
       graph={graph}
       legend={legend}
       edgeLegend={DATA_EDGES}

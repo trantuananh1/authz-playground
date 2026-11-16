@@ -20,7 +20,7 @@ import {
   type NodeProps,
 } from "@xyflow/react"
 import "@xyflow/react/dist/base.css"
-import { Box, Boxes, Building2, ChevronDown, Filter, KeyRound, Shield, ShieldCheck, User, UsersRound } from "lucide-react"
+import { Box, Boxes, Building2, ChevronDown, Eye, EyeOff, Filter, KeyRound, Shield, ShieldCheck, User, UsersRound } from "lucide-react"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
@@ -266,10 +266,52 @@ function LineEdgeView({ id, source, target, data, markerEnd }: EdgeProps<LineEdg
 const nodeTypes = { circle: CircleNodeView }
 const edgeTypes = { line: LineEdgeView }
 
+/* ------------------------------------------------------------- visibility */
+
+/** A legend row that shows or hides its kind of node or edge. */
+function LegendToggle({ off, name, onToggle, children }: { off: boolean; name: string; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={!off}
+      title={off ? `Show ${name}` : `Hide ${name}`}
+      className={cn(
+        "group/row -mx-1 flex items-center gap-1.5 rounded-sm px-1 py-px text-left text-[10.5px] leading-4 whitespace-nowrap transition-[opacity,background-color] hover:bg-accent",
+        off && "opacity-40 [&_span:last-of-type]:line-through",
+      )}
+    >
+      {children}
+      {off ? (
+        <EyeOff className="ml-auto size-3 shrink-0 text-muted-foreground" />
+      ) : (
+        <Eye className="ml-auto size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100" />
+      )}
+    </button>
+  )
+}
+
+/** Legend group of a node; instances are grouped per resource type. */
+const nodeGroup = (g: GNode) => (g.kind === "instance" ? `instance:${g.title.split(":")[0]}` : g.kind)
+const legendGroup = (l: LegendItem) => (l.kind === "instance" && l.label ? `instance:${l.label}` : l.kind)
+
+/** Legend group of an edge, read from the id prefix build.ts gives each kind of edge. */
+function edgeCategory(e: GEdge): string {
+  const prefix = e.id.slice(0, e.id.indexOf(":"))
+  if (prefix === "assign") return e.target.startsWith("tenant:") ? "assign-tenant" : "assign-instance"
+  return (
+    { rel: "relation", derive: "derivation", grant: "grant", rule: "rule", on: "filter", tuple: "tuple", in: "membership" }[prefix] ??
+    prefix
+  )
+}
+
+/** What each graph hides survives switching tabs. */
+const hiddenByGraph = new Map<string, Set<string>>()
+
 /* ----------------------------------------------------------------- canvas */
 
 /** Keeps the fitted graph clear of the legend in the top-left corner. */
-const FIT = { padding: { top: "40px", right: "40px", bottom: "40px", left: "160px" }, maxZoom: 1.2 } as const
+const FIT = { padding: { top: "40px", right: "40px", bottom: "40px", left: "176px" }, maxZoom: 1.2 } as const
 
 export interface LegendItem {
   kind: NodeKind
@@ -278,25 +320,48 @@ export interface LegendItem {
 }
 
 export interface EdgeLegendItem {
+  /** matches edgeCategory() */
+  category: string
   label: string
   color: string
   dashed?: boolean
 }
 
 interface CanvasProps {
+  /** keys the remembered show/hide state */
+  id: string
   graph: Graph
   legend: LegendItem[]
   edgeLegend: EdgeLegendItem[]
   empty: string
 }
 
-function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
+function Canvas({ id, graph, legend, edgeLegend, empty }: CanvasProps) {
   const theme = useStore((s) => s.theme)
   const flow = useReactFlow()
   const positions = useRef<Positions>(new Map())
   const [hovered, setHovered] = useState<string | null>(null)
   const [showLabels, setShowLabels] = useState(true)
   const [legendOpen, setLegendOpen] = useState(true)
+  const [hidden, setHidden] = useState<Set<string>>(() => hiddenByGraph.get(id) ?? new Set())
+  const toggleHidden = (key: string) =>
+    setHidden((prev) => {
+      const next = new Set(prev)
+      if (!next.delete(key)) next.add(key)
+      hiddenByGraph.set(id, next)
+      return next
+    })
+  const showAll = () => {
+    hiddenByGraph.set(id, new Set())
+    setHidden(new Set())
+  }
+  const isNodeHidden = (g: GNode) => hidden.has(nodeGroup(g))
+  // an edge disappears with its category or with either end
+  const hiddenNodeIds = useMemo(() => new Set(graph.nodes.filter((g) => hidden.has(nodeGroup(g))).map((g) => g.id)), [graph.nodes, hidden])
+  const visibleEdges = useMemo(
+    () => graph.edges.filter((e) => !hidden.has(`edge:${edgeCategory(e)}`) && !hiddenNodeIds.has(e.source) && !hiddenNodeIds.has(e.target)),
+    [graph.edges, hidden, hiddenNodeIds],
+  )
   const legendRef = useRef<HTMLDivElement>(null)
   const [nodes, setNodes, onNodesChange] = useNodesState<CircleNode>([])
 
@@ -371,21 +436,23 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
   const neighbours = useMemo(() => {
     if (!hovered) return null
     const set = new Set([hovered])
-    for (const e of graph.edges) {
+    for (const e of visibleEdges) {
       if (e.source === hovered) set.add(e.target)
       if (e.target === hovered) set.add(e.source)
     }
     return set
-  }, [hovered, graph.edges])
+  }, [hovered, visibleEdges])
 
   const viewNodes = useMemo(
     () =>
       nodes.map((n) => ({
         ...n,
+        hidden: isNodeHidden(n.data.g),
         zIndex: n.id === hovered ? 1000 : 1,
         data: { ...n.data, hovered: n.id === hovered, dim: !!neighbours && !neighbours.has(n.id), showLabel: showLabels },
       })),
-    [nodes, hovered, neighbours, showLabels],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nodes, hovered, neighbours, showLabels, hidden],
   )
 
   const edges = useMemo<LineEdge[]>(() => {
@@ -393,7 +460,7 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
     const pairKey = (e: GEdge) => [e.source, e.target].sort().join("\u0000")
     for (const e of graph.edges) pairCount.set(pairKey(e), (pairCount.get(pairKey(e)) ?? 0) + 1)
     const seen = new Map<string, number>()
-    return graph.edges
+    return visibleEdges
       .filter((e) => e.source !== e.target)
       .map((e) => {
         const k = pairKey(e)
@@ -409,7 +476,7 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
           data: { e, lane, lanes: pairCount.get(k) ?? 1, showLabel: touches, dim: !!hovered && !touches },
         }
       })
-  }, [graph.edges, hovered])
+  }, [graph.edges, visibleEdges, hovered])
 
   // keep dragged positions so the next layout starts from them
   const onNodeDragStop = (_: unknown, node: Node) => {
@@ -454,11 +521,20 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showInteractive={false} position="bottom-right" fitViewOptions={FIT} />
       </ReactFlow>
-      {hovered && <SmartTooltip hovered={hovered} nodes={nodes} edges={graph.edges} showLabels={showLabels} box={box} legend={legendRef} />}
+      {hovered && !hiddenNodeIds.has(hovered) && (
+        <SmartTooltip
+          hovered={hovered}
+          nodes={nodes.filter((n) => !hiddenNodeIds.has(n.id))}
+          edges={visibleEdges}
+          showLabels={showLabels}
+          box={box}
+          legend={legendRef}
+        />
+      )}
 
       <div
         ref={legendRef}
-        className="absolute top-2 left-2 flex w-36 flex-col gap-1 rounded-md border bg-panel/90 px-2 py-1.5 backdrop-blur"
+        className="absolute top-2 left-2 flex w-40 flex-col gap-1 rounded-md border bg-panel/90 px-2 py-1.5 backdrop-blur"
       >
         <button
           type="button"
@@ -473,8 +549,11 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
           <>
             {legend.map((l) => {
               const Icon = ICONS[l.kind]
+              const key = legendGroup(l)
+              const off = hidden.has(key)
+              const name = l.label ?? KIND_LABEL[l.kind]
               return (
-                <div key={l.label ?? l.kind} className="flex items-center gap-1.5 text-[10.5px] leading-4">
+                <LegendToggle key={key} off={off} name={name} onToggle={() => toggleHidden(key)}>
                   <span
                     className={cn(
                       "grid size-4 shrink-0 place-items-center rounded-full border",
@@ -484,30 +563,42 @@ function Canvas({ graph, legend, edgeLegend, empty }: CanvasProps) {
                   >
                     <Icon className="size-2.5" strokeWidth={2.2} />
                   </span>
-                  <span className="text-foreground/80">{l.label ?? KIND_LABEL[l.kind]}</span>
-                </div>
+                  <span className="text-foreground/80">{name}</span>
+                </LegendToggle>
               )
             })}
             {edgeLegend.length > 0 && (
-              <div className="mt-0.5 flex flex-col gap-1 border-t pt-1.5">
-                {edgeLegend.map((e) => (
-                  <div key={e.label} className="flex items-center gap-1.5 text-[10.5px] leading-4">
-                    <svg width="16" height="8" className="shrink-0" aria-hidden>
-                      <line
-                        x1="1"
-                        y1="4"
-                        x2="11"
-                        y2="4"
-                        stroke={e.color}
-                        strokeWidth="1.6"
-                        strokeDasharray={e.dashed ? "3 2" : undefined}
-                      />
-                      <path d="M11 1.5 L15.5 4 L11 6.5 Z" fill={e.color} />
-                    </svg>
-                    <span className="text-muted-foreground">{e.label}</span>
-                  </div>
-                ))}
+              <div className="mt-0.5 flex flex-col gap-0.5 border-t pt-1.5">
+                {edgeLegend.map((e) => {
+                  const key = `edge:${e.category}`
+                  return (
+                    <LegendToggle key={key} off={hidden.has(key)} name={e.label} onToggle={() => toggleHidden(key)}>
+                      <svg width="16" height="8" className="shrink-0" aria-hidden>
+                        <line
+                          x1="1"
+                          y1="4"
+                          x2="11"
+                          y2="4"
+                          stroke={e.color}
+                          strokeWidth="1.6"
+                          strokeDasharray={e.dashed ? "3 2" : undefined}
+                        />
+                        <path d="M11 1.5 L15.5 4 L11 6.5 Z" fill={e.color} />
+                      </svg>
+                      <span className="text-muted-foreground">{e.label}</span>
+                    </LegendToggle>
+                  )
+                })}
               </div>
+            )}
+            {hidden.size > 0 && (
+              <button
+                type="button"
+                onClick={showAll}
+                className="mt-0.5 flex items-center gap-1 border-t pt-1.5 text-left text-[10.5px] text-brand transition-opacity hover:opacity-80"
+              >
+                <Eye className="size-3" /> Show all ({hidden.size} hidden)
+              </button>
             )}
             <label className="mt-0.5 flex cursor-pointer items-center gap-1 border-t pt-1.5 text-[10.5px] text-muted-foreground">
               <Switch checked={showLabels} onCheckedChange={setShowLabels} className="origin-left scale-[0.6]" />

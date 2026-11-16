@@ -497,6 +497,11 @@ assert bob cannot delete document:d1
           <li>
             Tắt <B>Show names</B> trong Legend nếu muốn ẩn tên dưới các nút. Bấm tiêu đề <B>Legend</B> để thu gọn bảng.
           </li>
+          <li>
+            <B>Bấm một mục trong Legend</B> để ẩn hoặc hiện loại thành phần đó (ví dụ ẩn mọi Resource role, hoặc mọi cạnh Role derivation).
+            Mục đang ẩn bị mờ và có biểu tượng con mắt gạch chéo; bấm <B>Show all</B> để hiện lại tất cả. Vị trí các nút không đổi khi ẩn
+            hiện.
+          </li>
         </Bullets>
         <P>
           Tab <B>Data</B> của khung Graph vẽ người dùng, tài nguyên (mỗi loại một màu) và tenant, cùng các cạnh gán role, quan hệ và tài
