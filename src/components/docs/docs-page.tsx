@@ -175,9 +175,7 @@ function Content() {
         <Shot name="overview" alt="Toàn cảnh playground với bốn khu vực được đánh số" />
         <Steps>
           <Step>
-            <B>Thanh trên cùng (header)</B>, chia nhóm theo luồng làm việc từ trái sang phải: logo và nút chuyển <B>Playground</B> /{" "}
-            <B>Docs</B>; nhóm <B>nguồn</B> (menu <B>Store</B> chọn store mẫu và nút <B>Import</B> mở file); nhóm <B>định dạng</B> (
-            <B>DSL / JSON</B>); nhóm <B>đầu ra</B> ở bên phải (<B>Export</B>, <B>Share</B>); cuối cùng là nút đổi giao diện sáng/tối.
+            <B>Thanh trên cùng (header).</B> Điều hướng, chọn nguồn policy, định dạng và chia sẻ. Xem chi tiết từng nhóm ngay bên dưới.
           </Step>
           <Step>
             <B>Policy.</B> Nội dung file policy. Xem dạng <B>Text</B> (soạn thảo như code) hoặc <B>Matrix</B> (bảng tick quyền). Góc phải
@@ -195,6 +193,62 @@ function Content() {
           Thanh dưới cùng đếm số tenant, resource, role, condition set, user và relationship trong file. Bạn có thể kéo đường phân cách giữa
           các khu vực để đổi kích thước.
         </P>
+        <H3>Thanh trên cùng</H3>
+        <P>Các nút được gom thành năm nhóm, theo thứ tự bạn thường làm việc: chọn policy, chọn định dạng, rồi xuất hoặc chia sẻ.</P>
+        <Shot name="header-groups" alt="Thanh trên cùng với năm nhóm được đánh số" />
+        <Table
+          head={["", "Nhóm", "Thành phần", "Dùng để"]}
+          rows={[
+            [
+              "1",
+              <span key="g" className="whitespace-nowrap">
+                Điều hướng
+              </span>,
+              "Logo · Playground · Docs",
+              "Chuyển giữa playground và trang hướng dẫn này.",
+            ],
+            [
+              "2",
+              <span key="g" className="whitespace-nowrap">
+                Nguồn
+              </span>,
+              <>
+                <B>Store ▾</B> · <B>Import</B>
+              </>,
+              <>
+                Lấy policy: chọn một store mẫu, hoặc mở file <C>.dsl</C> / <C>.json</C> của bạn (cũng có thể kéo-thả file vào trang).
+              </>,
+            ],
+            [
+              "3",
+              <span key="g" className="whitespace-nowrap">
+                Định dạng
+              </span>,
+              <>
+                <B>DSL</B> / <B>JSON</B>
+              </>,
+              "Đổi cách viết policy trong editor; nội dung được chuyển đổi tự động.",
+            ],
+            [
+              "4",
+              <span key="g" className="whitespace-nowrap">
+                Đầu ra
+              </span>,
+              <>
+                <B>Export ▾</B> · <B>Share</B>
+              </>,
+              "Tải file về (DSL hoặc JSON), sao chép nội dung, hoặc tạo đường link chứa toàn bộ file để gửi người khác.",
+            ],
+            [
+              "5",
+              <span key="g" className="whitespace-nowrap">
+                Tuỳ chọn
+              </span>,
+              "Mặt trời / mặt trăng",
+              "Chuyển giao diện tối và sáng.",
+            ],
+          ]}
+        />
       </Section>
 
       <Section id="mo-hinh" title="Ba mô hình phân quyền">

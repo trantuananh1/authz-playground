@@ -43,6 +43,7 @@ init
 fresh entitlements
 $AB eval "$ANNOTATE" >/dev/null; full overview; $AB eval 'document.querySelectorAll(".doc-anno").forEach(e=>e.remove()); 1' >/dev/null
 shot header header
+$AB eval "$(cat "$HERE/annotate-header.js")" >/dev/null; full _header-groups; $AB eval 'document.querySelectorAll(".doc-anno").forEach(e=>e.remove()); 1' >/dev/null
 shot '[data-tour=editor]' editor-text
 $AB eval '[...document.querySelectorAll("header button")].find(b=>b.innerText.includes("Store")).dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,button:0,pointerType:"mouse"})); 1' >/dev/null; $AB wait 500 >/dev/null
 full _store-menu; $AB press Escape >/dev/null
@@ -85,6 +86,9 @@ python3 - <<'PY'
 from PIL import Image
 Image.open("_store-menu.png").crop((0, 0, 1480, 860)).save("store-menu.png")
 Image.open("_export-menu.png").crop((1740, 0, 2880, 320)).save("export-menu.png")
+# the header and the numbers under it
+Image.open("_header-groups.png").crop((0, 0, 2880, 196)).save("_header-groups.png")
 PY
-rm -f _store-menu.png _export-menu.png
+python3 "$HERE/stitch-header.py" _header-groups.png header-groups.png
+rm -f _store-menu.png _export-menu.png _header-groups.png
 python3 "$HERE/trim.py" check-allowed.png check-denied.png tests.png data.png user-matrix.png problems.png
